@@ -1,0 +1,64 @@
+<html lang="ru">
+    <head>
+        <title>{{ .mission.Title }}</title>
+        <link rel="stylesheet" href="/static/css/styles.css">
+    </head>
+    <body>
+        <header class="site-header site-header-main">
+            <form action="/" method="GET" class="search-form header-search">
+                <input
+                    type="text"
+                    name="query"
+                    class="search-input"
+                    placeholder="Поиск маршрутов и планет"
+                    value="">
+            </form>
+            <a href="/" class="header-home header-logo-center">
+                <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
+            </a>
+            <div class="header-mission"></div>
+        </header>
+        <div class="system-load-detail">
+            <div class="system-load-detail__header-card">
+                <h1 class="system-load-detail__title">{{ .mission.Title }}</h1>
+                <p class="system-load-detail__description">{{ .mission.Description }}</p>
+                <div class="system-load-detail__params">
+                    <div class="system-load-detail__param">
+                        Сухая масса аппарата: <span>{{ printf "%.0f" .mission.DryMassKg }} кг</span>
+                    </div>
+                    <div class="system-load-detail__param">
+                        Удельный импульс двигателя: <span>{{ printf "%.0f" .mission.IspSeconds }} с</span>
+                    </div>
+                </div>
+            </div>
+            <table class="load-table">
+                <thead>
+                    <tr>
+                        <th class="load-table__col-photo">Изображение</th>
+                        <th>Маршрут</th>
+                        <th>Откуда</th>
+                        <th>Куда</th>
+                        <th>Δv (м/с)</th>
+                        <th>Топливо (кг)</th>
+                        <th>Энергия (Дж)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .mission.Routes }}
+                    <tr>
+                        <td class="load-table__col-photo">
+                            <img src="http://localhost:9000/spaceobjects/{{ .Route.Image }}" alt="{{ .Route.Title }}">
+                        </td>
+                        <td>{{ .Route.Title }}</td>
+                        <td>{{ .Route.From }}</td>
+                        <td>{{ .Route.To }}</td>
+                        <td class="load-table__col-result">{{ printf "%.0f" .DeltaVms }}</td>
+                        <td>{{ printf "%.0f" .PropellantKg }}</td>
+                        <td>{{ printf "%.2e" .EnergyJ }}</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>

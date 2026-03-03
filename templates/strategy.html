@@ -1,0 +1,49 @@
+<html lang="ru">
+    <head>
+        <title>{{ .route.Title }} — межпланетный маршрут</title>
+        <link rel="stylesheet" href="/static/css/styles.css">
+    </head>
+    <body class="detail-page">
+        <header class="site-header site-header--center-logo">
+            <a href="/" class="header-home">
+                <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
+            </a>
+        </header>
+        <main>
+            <section class="detail-video-wrapper">
+                <video
+                    class="detail-video"
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                >
+                    <source src="http://localhost:9000/spaceobjects/{{ .route.Video }}" type="video/mp4">
+                </video>
+                <div class="detail-video__overlay">
+                    <h1 class="detail-video__title">{{ .route.Title }}</h1>
+                    <p class="detail-video__subtitle">{{ .route.Description }}</p>
+                </div>
+            </section>
+            <section class="detail-content">
+                {{ if .hasMissionData }}
+                <h2 class="detail-content__heading">Параметры расчёта миссии</h2>
+                <div class="detail-content__grid">
+                    <div class="detail-content__metric">
+                        <div class="detail-content__label">Характеристическая скорость Δv</div>
+                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.DeltaVms }} м/с</div>
+                    </div>
+                    <div class="detail-content__metric">
+                        <div class="detail-content__label">Требуемое топливо</div>
+                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.PropellantKg }} кг</div>
+                    </div>
+                    <div class="detail-content__metric">
+                        <div class="detail-content__label">Оценка энергии</div>
+                        <div class="detail-content__value">{{ printf "%.2e" .missionRoute.EnergyJ }} Дж</div>
+                    </div>
+                </div>
+                {{ end }}
+            </section>
+        </main>
+    </body>
+</html>

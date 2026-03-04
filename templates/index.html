@@ -17,9 +17,10 @@
                 <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
             </a>
             <div class="header-mission">
-                {{ range .missions }}
-                <a href="/missions/{{ .ID }}" class="calc-button">
+                {{ if .hasDraft }}
+                <a href="/missions/{{ .draftID }}" class="calc-button">
                     <span class="calc-button__label">Расчёты</span>
+                    <span class="calc-button__badge">{{ .draftSize }}</span>
                     <svg class="calc-button__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
                         <g>
                             <g>

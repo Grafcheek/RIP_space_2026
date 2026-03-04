@@ -30,6 +30,11 @@
                         Удельный импульс двигателя: <span>{{ printf "%.0f" .mission.IspSeconds }} с</span>
                     </div>
                 </div>
+                {{ if .mission.CanDelete }}
+                <form action="/basket/delete/{{ .mission.ID }}" method="POST" class="system-load-detail__delete">
+                    <button type="submit" class="system-load-detail__delete-btn">Удалить заявку</button>
+                </form>
+                {{ end }}
             </div>
             <table class="load-table">
                 <thead>
@@ -55,6 +60,22 @@
                         <td class="load-table__col-result">{{ printf "%.0f" .DeltaVms }}</td>
                         <td>{{ printf "%.0f" .PropellantKg }}</td>
                         <td>{{ printf "%.2e" .EnergyJ }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="7">
+                            <form action="/missions/{{ $.mission.ID }}/segments/{{ .Route.ID }}/recalc" method="POST" class="segment-form">
+                                <label>Масса аппарата, кг:
+                                    <input type="number" name="dry_mass_kg" value="{{ printf "%.0f" .SegmentDryMassKg }}" step="1">
+                                </label>
+                                <label>Isp, с:
+                                    <input type="number" name="isp_sec" value="{{ printf "%.0f" .SegmentIspSec }}" step="1">
+                                </label>
+                                <button type="submit" class="detail-content__primary-btn">Рассчитать</button>
+                            </form>
+                            <form action="/missions/{{ $.mission.ID }}/segments/{{ .Route.ID }}/delete" method="POST" class="system-load-detail__delete">
+                                <button type="submit" class="system-load-detail__delete-btn">Удалить маршрут</button>
+                            </form>
+                        </td>
                     </tr>
                     {{ end }}
                 </tbody>

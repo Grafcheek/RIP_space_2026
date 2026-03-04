@@ -118,7 +118,7 @@ img {
 .calc-button {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 8px 12px;
     color: #ffffff;
     font-family: "Public Sans Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -127,6 +127,20 @@ img {
 
 .calc-button__icon path {
     fill: #ffffff;
+}
+
+.calc-button__badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #000000;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .search-input {
@@ -374,6 +388,36 @@ a.card img {
     font-size: 18px;
     font-weight: 600;
     color: #000000;
+}
+
+.detail-content__actions {
+    margin-top: 32px;
+}
+
+.detail-content__primary-btn {
+    border: 1px solid #000000;
+    background: #000000;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-family: "Public Sans Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.system-load-detail__delete {
+    margin-top: 16px;
+}
+
+.system-load-detail__delete-btn {
+    border: 1px solid #af1108;
+    background: #af1108;
+    color: #ffffff;
+    padding: 10px 14px;
+    font-family: "Public Sans Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
 }
 
 /* ===== Блок параметров нагрузки (на странице стратегии) ===== */

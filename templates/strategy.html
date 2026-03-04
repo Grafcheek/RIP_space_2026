@@ -43,6 +43,12 @@
                     </div>
                 </div>
                 {{ end }}
+                <p class="detail-content__description">
+                    Выберите параметры маршрута и добавьте его в текущую заявку для последующего расчёта на странице «Расчёты».
+                </p>
+                <form action="/basket/add/{{ .route.ID }}" method="POST" class="detail-content__actions">
+                    <button type="submit" class="detail-content__primary-btn">Добавить в заявку</button>
+                </form>
             </section>
         </main>
     </body>

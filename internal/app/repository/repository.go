@@ -34,7 +34,7 @@ type TransferRoute struct {
 	ToOrbitAU   float64 // радиус орбиты получателя (а.е.)
 }
 
-// MissionProfile — заявка: исходные параметры аппарата и набора перелётов для расчёта.
+// MissionProfile — interplanetary flight: исходные параметры аппарата и набора перелётов для расчёта.
 type MissionProfile struct {
 	ID          int
 	Title       string
@@ -100,6 +100,51 @@ func (r *Repository) GetRoutes() ([]TransferRoute, error) {
 			Video:       "Neptune_vid.mp4",
 			FromOrbitAU: 1.000,
 			ToOrbitAU:   30.110,
+		},
+		// Обратные interplanetary flight: с планет обратно на Землю (в одном столбце под перелётами «туда»).
+		{
+			ID:          5,
+			Title:       "Обратный с Юпитера",
+			From:        "Юпитер",
+			To:          "Земля",
+			Description: "Обратный перелёт с орбиты Юпитера на Землю. Те же параметры орбит, но теперь считаем характеристическую скорость и топливо для пути домой.",
+			Image:       "Earth.jpg",
+			Video:       "Earth_vid.mp4",
+			FromOrbitAU: 5.204,
+			ToOrbitAU:   1.000,
+		},
+		{
+			ID:          6,
+			Title:       "Обратный с Сатурна",
+			From:        "Сатурн",
+			To:          "Земля",
+			Description: "Обратный перелёт с орбиты Сатурна на Землю: моделируем возврат после глубокой внешней миссии и оцениваем Δv и массу топлива.",
+			Image:       "Earth.jpg",
+			Video:       "Earth_vid.mp4",
+			FromOrbitAU: 9.583,
+			ToOrbitAU:   1.000,
+		},
+		{
+			ID:          7,
+			Title:       "Обратный с Урана",
+			From:        "Уран",
+			To:          "Земля",
+			Description: "Обратный перелёт с орбиты Урана на Землю. Ледяной гигант остаётся позади, а мы считаем Δv и топливо для возвращения к Земле.",
+			Image:       "Earth.jpg",
+			Video:       "Earth_vid.mp4",
+			FromOrbitAU: 19.218,
+			ToOrbitAU:   1.000,
+		},
+		{
+			ID:          8,
+			Title:       "Обратный с Нептуна",
+			From:        "Нептун",
+			To:          "Земля",
+			Description: "Самый дальний обратный перелёт: с орбиты Нептуна обратно к Земле. В той же упрощённой модели перехода Гомана оцениваем требуемую характеристическую скорость и топливо.",
+			Image:       "Earth.jpg",
+			Video:       "Earth_vid.mp4",
+			FromOrbitAU: 30.110,
+			ToOrbitAU:   1.000,
 		},
 	}
 
@@ -230,13 +275,13 @@ func (r *Repository) buildMissionProfile(id int, title, description string, rout
 	}, nil
 }
 
-// GetMissionProfiles возвращает «заявки» на расчёт.
+// GetMissionProfiles возвращает interplanetary flight на расчёт.
 func (r *Repository) GetMissionProfiles() ([]MissionProfile, error) {
 	profile, err := r.buildMissionProfile(
 		1,
 		"Расчёт Δv и топлива для межпланетного перелёта",
-		"Параметры аппарата заданы фиксированно (Lab 1: без редактирования). Для каждого маршрута считаем Δv по переходу Гомана, массу топлива по Циолковскому и грубую оценку энергии.",
-		[]int{1, 2, 3, 4},
+		"Заявка на расчёт межпланетного перелёта с фиксированными параметрами аппарата (Lab 1: без редактирования). Для каждого маршрута считаем характеристическую скорость Δv, массу топлива по Циолковскому и грубую оценку энергии.",
+		[]int{1, 5, 2, 6, 3, 7, 4, 8},
 		2_000, // сухая масса, кг
 		320,   // Isp, с (условный химический двигатель)
 	)
@@ -246,7 +291,7 @@ func (r *Repository) GetMissionProfiles() ([]MissionProfile, error) {
 	return []MissionProfile{profile}, nil
 }
 
-// GetMissionProfile возвращает «заявку» по ID.
+// GetMissionProfile возвращает interplanetary flight по ID.
 func (r *Repository) GetMissionProfile(id int) (MissionProfile, error) {
 	profiles, err := r.GetMissionProfiles()
 	if err != nil {
@@ -257,10 +302,10 @@ func (r *Repository) GetMissionProfile(id int) (MissionProfile, error) {
 			return p, nil
 		}
 	}
-	return MissionProfile{}, fmt.Errorf("заявка не найдена")
+	return MissionProfile{}, fmt.Errorf("interplanetary flight не найдена")
 }
 
-// GetMissionRouteForRoute ищет запись м-м для маршрута внутри заявки (для детальной страницы).
+// GetMissionRouteForRoute ищет запись м-м для маршрута внутри interplanetary flight (для детальной страницы).
 func (r *Repository) GetMissionRouteForRoute(routeID int) (*MissionRoute, error) {
 	profiles, err := r.GetMissionProfiles()
 	if err != nil {
@@ -273,5 +318,5 @@ func (r *Repository) GetMissionRouteForRoute(routeID int) (*MissionRoute, error)
 			}
 		}
 	}
-	return nil, fmt.Errorf("маршрут не найден в заявках")
+	return nil, fmt.Errorf("маршрут не найден в interplanetary flight")
 }

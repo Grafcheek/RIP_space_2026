@@ -21,7 +21,7 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-// GetRoutes — главная страница: каталог межпланетных маршрутов + иконка заявки (миссии).
+// GetRoutes — главная страница: каталог межпланетных маршрутов + иконка interplanetary flight (миссии).
 func (h *Handler) GetRoutes(ctx *gin.Context) {
 	searchQuery := ctx.Query("query")
 
@@ -66,7 +66,7 @@ func (h *Handler) GetRoute(ctx *gin.Context) {
 	})
 }
 
-// GetMission — страница заявки: профиль миссии и таблица маршрутов с Δv, топливом и энергией.
+// GetMission — страница interplanetary flight: профиль миссии и таблица маршрутов с Δv, топливом и энергией.
 func (h *Handler) GetMission(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)

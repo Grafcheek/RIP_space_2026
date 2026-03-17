@@ -5,29 +5,45 @@
     </head>
     <body>
         <header class="site-header site-header-main">
-            <form action="/" method="GET" class="search-form header-search">
-                <input
-                    type="text"
-                    name="query"
-                    class="search-input"
-                    placeholder="Поиск маршрутов и планет"
-                    value="">
-            </form>
+            <div class="header-spacer"></div>
             <a href="/" class="header-home header-logo-center">
                 <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
             </a>
-            <div class="header-mission"></div>
+            <div class="header-spacer"></div>
         </header>
+        <div class="toolbar">
+            <div class="toolbar-inner">
+                <form action="/" method="GET" class="search-form">
+                    <input
+                        type="text"
+                        name="query"
+                        class="search-input"
+                        placeholder="Поиск маршрутов и планет"
+                        value="">
+                </form>
+                <div class="toolbar-basket">
+                    <a href="/missions/{{ .mission.ID }}" class="system-load-icon" aria-label="Interplanetary flight">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
+                        </svg>
+                        <span class="system-load-icon__badge">{{ .mission.RouteCount }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
         <div class="system-load-detail">
             <div class="system-load-detail__header-card">
                 <h1 class="system-load-detail__title">{{ .mission.Title }}</h1>
                 <p class="system-load-detail__description">{{ .mission.Description }}</p>
                 <div class="system-load-detail__params">
                     <div class="system-load-detail__param">
-                        Сухая масса аппарата: <span>{{ printf "%.0f" .mission.DryMassKg }} кг</span>
+                        Услуга (орбиты, а.е.): <span>от {{ printf "%.3f" (index .mission.Routes 0).Route.FromOrbitAU }} до {{ printf "%.3f" (index .mission.Routes 0).Route.ToOrbitAU }}</span>
                     </div>
                     <div class="system-load-detail__param">
-                        Удельный импульс двигателя: <span>{{ printf "%.0f" .mission.IspSeconds }} с</span>
+                        Заявка (мощность двигателя): <span>{{ printf "%.0f" .mission.IspSeconds }} с Isp</span>
+                    </div>
+                    <div class="system-load-detail__param">
+                        м-м (масса аппарата): <span>{{ printf "%.0f" .mission.DryMassKg }} кг</span>
                     </div>
                 </div>
             </div>

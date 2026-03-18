@@ -6,11 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"web_backend/internal/app/repository"
 	"gorm.io/gorm"
+	"web_backend/internal/app/repository"
 )
-
-const demoUserID = 1
 
 // Handler содержит зависимости HTTP-обработчиков.
 type Handler struct {
@@ -37,7 +35,7 @@ func (h *Handler) GetRoutes(ctx *gin.Context) {
 		hasDraft bool
 		draftMP  repository.MissionProfile
 	)
-	if fr, err := h.Repository.GetDraft(demoUserID); err == nil {
+	if fr, err := h.Repository.GetDraft(CurrentUserID()); err == nil {
 		hasDraft = true
 		draftMP = repository.ToMissionProfile(fr)
 	} else if err != nil && err != gorm.ErrRecordNotFound {
@@ -72,7 +70,7 @@ func (h *Handler) GetRoute(ctx *gin.Context) {
 		hasMissionData bool
 		missionRoute   *repository.MissionRoute
 	)
-	if fr, err := h.Repository.GetDraft(demoUserID); err == nil {
+	if fr, err := h.Repository.GetDraft(CurrentUserID()); err == nil {
 		mp := repository.ToMissionProfile(fr)
 		for i := range mp.Routes {
 			if mp.Routes[i].Route.ID == route.ID {
@@ -100,7 +98,7 @@ func (h *Handler) GetMission(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	fr, err := h.Repository.GetMission(demoUserID, id)
+	fr, err := h.Repository.GetMission(CurrentUserID(), id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			ctx.Status(http.StatusNotFound)
@@ -127,7 +125,7 @@ func (h *Handler) PostAddToDraft(ctx *gin.Context) {
 		return
 	}
 
-	if _, err := h.Repository.AddRouteToDraft(demoUserID, routeID); err != nil {
+	if _, err := h.Repository.AddRouteToDraft(CurrentUserID(), routeID); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return
@@ -145,7 +143,7 @@ func (h *Handler) PostDeleteDraft(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.SoftDeleteDraft(demoUserID, missionID); err != nil {
+	if err := h.Repository.SoftDeleteDraft(CurrentUserID(), missionID); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return
@@ -184,7 +182,7 @@ func (h *Handler) PostRecalcSegment(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.UpdateSegmentParams(demoUserID, missionID, routeID, mass, isp); err != nil {
+	if err := h.Repository.UpdateSegmentParams(CurrentUserID(), missionID, routeID, mass, isp); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return
@@ -209,7 +207,7 @@ func (h *Handler) PostDeleteSegment(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.RemoveRouteFromDraft(demoUserID, missionID, routeID); err != nil {
+	if err := h.Repository.RemoveRouteFromDraft(CurrentUserID(), missionID, routeID); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return

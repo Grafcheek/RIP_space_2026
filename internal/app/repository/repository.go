@@ -45,16 +45,16 @@ func (TransferRoute) TableName() string { return "transfer_routes" }
 
 // FlightRequest — заявка на расчёты.
 type FlightRequest struct {
-	ID              int        `gorm:"column:id;primaryKey"`
-	Status          string     `gorm:"column:status"`
-	CreatedAt       time.Time  `gorm:"column:created_at"`
-	CreatedBy       int        `gorm:"column:created_by"`
-	FormedAt        *time.Time `gorm:"column:formed_at"`
-	CompletedAt     *time.Time `gorm:"column:completed_at"`
-	ModeratedBy     *int       `gorm:"column:moderated_by"`
-	DryMassKg       float64    `gorm:"column:spacecraft_dry_mass_kg"`
-	IspSeconds      float64    `gorm:"column:engine_isp_sec"`
-	TotalFuelMassKg *float64   `gorm:"column:total_fuel_mass_kg"`
+	ID              int                     `gorm:"column:id;primaryKey"`
+	Status          string                  `gorm:"column:status"`
+	CreatedAt       time.Time               `gorm:"column:created_at"`
+	CreatedBy       int                     `gorm:"column:created_by"`
+	FormedAt        *time.Time              `gorm:"column:formed_at"`
+	CompletedAt     *time.Time              `gorm:"column:completed_at"`
+	ModeratedBy     *int                    `gorm:"column:moderated_by"`
+	DryMassKg       float64                 `gorm:"column:spacecraft_dry_mass_kg"`
+	IspSeconds      float64                 `gorm:"column:engine_isp_sec"`
+	TotalFuelMassKg *float64                `gorm:"column:total_fuel_mass_kg"`
 	Items           []FlightRequestRouteRow `gorm:"foreignKey:FlightRequestID;references:ID"`
 }
 
@@ -80,6 +80,16 @@ type FlightRequestRouteRow struct {
 
 func (FlightRequestRouteRow) TableName() string { return "flight_request_routes" }
 
+// User — упрощённая модель пользователя для домена регистрации/аутентификации.
+type User struct {
+	ID           int64  `gorm:"column:id;primaryKey"`
+	Username     string `gorm:"column:username"`
+	PasswordHash string `gorm:"column:password_hash"`
+	IsModerator  bool   `gorm:"column:is_moderator"`
+}
+
+func (User) TableName() string { return "users" }
+
 // MissionProfile — DTO для шаблонов (как в Lab 1), собирается из БД.
 type MissionProfile struct {
 	ID          int
@@ -95,10 +105,10 @@ type MissionProfile struct {
 }
 
 type MissionRoute struct {
-	Route        TransferRoute
-	DeltaVms     float64
-	PropellantKg float64
-	EnergyJ      float64
+	Route            TransferRoute
+	DeltaVms         float64
+	PropellantKg     float64
+	EnergyJ          float64
 	SegmentDryMassKg float64
 	SegmentIspSec    float64
 }
@@ -130,6 +140,11 @@ func (r *Repository) GetRoute(id int) (TransferRoute, error) {
 		return TransferRoute{}, err
 	}
 	return rt, nil
+}
+
+// CreateRoute создаёт новую услугу (маршрут) через ORM.
+func (r *Repository) CreateRoute(rt *TransferRoute) error {
+	return r.db.Create(rt).Error
 }
 
 func (r *Repository) GetDraft(userID int) (*FlightRequest, error) {
@@ -184,11 +199,11 @@ func (r *Repository) AddRouteToDraft(userID, routeID int) (*FlightRequest, error
 			Scan(&maxOrder).Error
 
 		row := FlightRequestRouteRow{
-			FlightRequestID: draft.ID,
-			RouteID:         routeID,
-			Quantity:        1,
-			SegmentOrder:    maxOrder + 1,
-			IsPrimary:       maxOrder == 0,
+			FlightRequestID:  draft.ID,
+			RouteID:          routeID,
+			Quantity:         1,
+			SegmentOrder:     maxOrder + 1,
+			IsPrimary:        maxOrder == 0,
 			SegmentDryMassKg: &draft.DryMassKg,
 			SegmentIspSec:    &draft.IspSeconds,
 		}
@@ -258,6 +273,259 @@ WHERE fr.id = frt.flight_request_id
   AND frt.route_id = ?`,
 		userID, missionID, routeID,
 	).Error
+}
+
+// UpdateSegmentMM обновляет поля м-м строки (quantity, order, параметры сегмента)
+// и, при изменении массы/удельного импульса, пересчитывает dv/топливо.
+func (r *Repository) UpdateSegmentMM(userID, missionID, routeID int, quantity, segmentOrder *int, mass, isp *float64) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var fr FlightRequest
+		if err := tx.Where("id = ? AND created_by = ? AND status = 'draft'", missionID, userID).First(&fr).Error; err != nil {
+			return err
+		}
+
+		var row FlightRequestRouteRow
+		if err := tx.Preload("Route").
+			Where("flight_request_id = ? AND route_id = ?", missionID, routeID).
+			First(&row).Error; err != nil {
+			return err
+		}
+
+		updates := map[string]interface{}{}
+		if quantity != nil {
+			updates["quantity"] = *quantity
+		}
+		if segmentOrder != nil {
+			updates["segment_order"] = *segmentOrder
+		}
+
+		var dv, fuel float64
+		if mass != nil {
+			updates["segment_dry_mass_kg"] = *mass
+		}
+		if isp != nil {
+			updates["segment_isp_sec"] = *isp
+		}
+		if mass != nil || isp != nil {
+			m := fr.DryMassKg
+			if mass != nil {
+				m = *mass
+			} else if row.SegmentDryMassKg != nil {
+				m = *row.SegmentDryMassKg
+			}
+			i := fr.IspSeconds
+			if isp != nil {
+				i = *isp
+			} else if row.SegmentIspSec != nil {
+				i = *row.SegmentIspSec
+			}
+
+			dv = CalculateDeltaVms(row.Route.FromOrbitKm, row.Route.ToOrbitKm)
+			fuel = CalculatePropellantKg(m, dv, i)
+			updates["delta_v_kms"] = dv
+			updates["fuel_mass_kg"] = fuel
+		}
+
+		if len(updates) == 0 {
+			return nil
+		}
+
+		return tx.Model(&row).Updates(updates).Error
+	})
+}
+
+// RequestListItem — DTO для списка заявок с логинами и итогами.
+type RequestListItem struct {
+	ID                 int        `json:"id"`
+	Status             string     `json:"status"`
+	CreatedAt          time.Time  `json:"created_at"`
+	FormedAt           *time.Time `json:"formed_at"`
+	CompletedAt        *time.Time `json:"completed_at"`
+	CreatorLogin       string     `json:"creator_login"`
+	ModeratorLogin     *string    `json:"moderator_login"`
+	TotalFuelMassKg    *float64   `json:"total_fuel_mass_kg"`
+	SegmentsWithResult int64      `json:"segments_with_result"`
+}
+
+// ListRequests возвращает список заявок с фильтрацией по статусу и диапазону даты формирования.
+func (r *Repository) ListRequests(status string, formedFrom, formedTo *time.Time) ([]RequestListItem, error) {
+	var items []RequestListItem
+
+	tx := r.db.Table("flight_requests fr").
+		Select(`fr.id,
+		        fr.status,
+		        fr.created_at,
+		        fr.formed_at,
+		        fr.completed_at,
+		        uc.username AS creator_login,
+		        um.username AS moderator_login,
+		        fr.total_fuel_mass_kg,
+		        COALESCE((
+		          SELECT COUNT(*)
+		          FROM flight_request_routes mm
+		          WHERE mm.flight_request_id = fr.id
+		            AND mm.fuel_mass_kg IS NOT NULL
+		        ), 0) AS segments_with_result`).
+		Joins("JOIN users uc ON uc.id = fr.created_by").
+		Joins("LEFT JOIN users um ON um.id = fr.moderated_by").
+		Where("fr.status NOT IN ('deleted', 'draft')")
+
+	if status != "" {
+		tx = tx.Where("fr.status = ?", status)
+	}
+	if formedFrom != nil {
+		tx = tx.Where("fr.formed_at >= ?", *formedFrom)
+	}
+	if formedTo != nil {
+		tx = tx.Where("fr.formed_at <= ?", *formedTo)
+	}
+
+	if err := tx.Order("fr.formed_at DESC, fr.id DESC").Scan(&items).Error; err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+// GetRequestWithItems возвращает одну заявку с услугами для API.
+func (r *Repository) GetRequestWithItems(userID, id int) (*FlightRequest, error) {
+	var fr FlightRequest
+	err := r.db.Preload("Items.Route").
+		Where("id = ? AND created_by = ? AND status <> 'deleted'", id, userID).
+		First(&fr).Error
+	if err != nil {
+		return nil, err
+	}
+	return &fr, nil
+}
+
+// UpdateRequestFields изменяет только «тематические» поля заявки.
+func (r *Repository) UpdateRequestFields(userID, id int, dryMassKg, ispSeconds *float64) error {
+	updates := map[string]interface{}{}
+	if dryMassKg != nil {
+		updates["spacecraft_dry_mass_kg"] = *dryMassKg
+	}
+	if ispSeconds != nil {
+		updates["engine_isp_sec"] = *ispSeconds
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+
+	return r.db.Model(&FlightRequest{}).
+		Where("id = ? AND created_by = ? AND status = 'draft'", id, userID).
+		Updates(updates).Error
+}
+
+// FormRequest устанавливает статус 'formed', дату формирования и пересчитывает итоговое топливо.
+func (r *Repository) FormRequest(userID, id int) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var fr FlightRequest
+		if err := tx.Preload("Items.Route").
+			Where("id = ? AND created_by = ? AND status = 'draft'", id, userID).
+			First(&fr).Error; err != nil {
+			return err
+		}
+
+		if len(fr.Items) == 0 {
+			return fmt.Errorf("заявка пуста, добавить хотя бы один маршрут")
+		}
+
+		if fr.DryMassKg <= 0 || fr.IspSeconds <= 0 {
+			return fmt.Errorf("обязательные поля заявки не заполнены корректно")
+		}
+
+		var totalFuel float64
+		for _, it := range fr.Items {
+			mass := fr.DryMassKg
+			if it.SegmentDryMassKg != nil && *it.SegmentDryMassKg > 0 {
+				mass = *it.SegmentDryMassKg
+			}
+			isp := fr.IspSeconds
+			if it.SegmentIspSec != nil && *it.SegmentIspSec > 0 {
+				isp = *it.SegmentIspSec
+			}
+
+			dv := CalculateDeltaVms(it.Route.FromOrbitKm, it.Route.ToOrbitKm)
+			fuel := CalculatePropellantKg(mass, dv, isp)
+			totalFuel += fuel
+
+			if err := tx.Model(&FlightRequestRouteRow{}).
+				Where("flight_request_id = ? AND route_id = ?", fr.ID, it.RouteID).
+				Updates(map[string]interface{}{
+					"segment_dry_mass_kg": mass,
+					"segment_isp_sec":     isp,
+					"delta_v_kms":         dv,
+					"fuel_mass_kg":        fuel,
+				}).Error; err != nil {
+				return err
+			}
+		}
+
+		now := time.Now()
+		return tx.Model(&fr).Updates(map[string]interface{}{
+			"status":             "formed",
+			"formed_at":          now,
+			"total_fuel_mass_kg": totalFuel,
+		}).Error
+	})
+}
+
+// ModerateRequest завершает или отклоняет сформированную заявку.
+func (r *Repository) ModerateRequest(id, moderatorID int, action string) error {
+	newStatus := ""
+	switch action {
+	case "complete":
+		newStatus = "completed"
+	case "reject":
+		newStatus = "rejected"
+	default:
+		return fmt.Errorf("unknown action: %s", action)
+	}
+
+	var fr FlightRequest
+	if err := r.db.Where("id = ?", id).First(&fr).Error; err != nil {
+		return err
+	}
+	if fr.Status != "formed" {
+		return fmt.Errorf("завершить или отклонить можно только сформированную заявку")
+	}
+
+	now := time.Now()
+	result := r.db.Model(&FlightRequest{}).
+		Where("id = ? AND status = 'formed'", id).
+		Updates(map[string]interface{}{
+			"status":       newStatus,
+			"completed_at": now,
+			"moderated_by": moderatorID,
+		})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("заявка не обновлена")
+	}
+	return nil
+}
+
+// SoftDeleteRequest помечает заявку удалённой (только черновик создателя).
+func (r *Repository) SoftDeleteRequest(userID, id int) error {
+	return r.db.Exec(
+		"UPDATE flight_requests SET status = 'deleted' WHERE id = ? AND created_by = ? AND status = 'draft'",
+		id, userID,
+	).Error
+}
+
+// CreateUser регистрирует нового пользователя.
+func (r *Repository) CreateUser(username, passwordHash string, isModerator bool) (*User, error) {
+	u := &User{
+		Username:     username,
+		PasswordHash: passwordHash,
+		IsModerator:  isModerator,
+	}
+	if err := r.db.Create(u).Error; err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 // CalculateDeltaVms реализует формулу Гомана по радиусам орбит (км).

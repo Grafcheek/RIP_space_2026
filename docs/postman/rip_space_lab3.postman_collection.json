@@ -1,0 +1,314 @@
+{
+  "info": {
+    "_postman_id": "f1f7e5b2-4e09-4b76-9c73-4d1f4df36b31",
+    "name": "RIP Space Lab 3 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Коллекция из 16 REST-методов для демонстрации лабораторной 3 по космическим межпланетным перелётам."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "draftRequestId", "value": "" },
+    { "key": "createdServiceId", "value": "" },
+    { "key": "firstRouteId", "value": "1" },
+    { "key": "secondRouteId", "value": "2" },
+    { "key": "newUsername", "value": "space_guest_2026" },
+    { "key": "newPassword", "value": "orbital_pass_2026" }
+  ],
+  "item": [
+    {
+      "name": "01. GET requests list filtered",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests?status=formed&from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests"],
+          "query": [
+            { "key": "status", "value": "formed" },
+            { "key": "from", "value": "2026-01-01T00:00:00Z" },
+            { "key": "to", "value": "2026-12-31T23:59:59Z" }
+          ]
+        },
+        "description": "Список заявок с фильтрацией по статусу и диапазону даты формирования."
+      }
+    },
+    {
+      "name": "02. GET cart icon",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let json = pm.response.json();",
+              "if (json.id) { pm.collectionVariables.set('draftRequestId', String(json.id)); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/cart-icon",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "cart-icon"]
+        },
+        "description": "Получить id черновика и количество услуг в текущей заявке."
+      }
+    },
+    {
+      "name": "03. DELETE draft request",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}"]
+        },
+        "description": "Логически удалить введённую заявку, если черновик уже существует."
+      }
+    },
+    {
+      "name": "04. GET services filtered",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/services?query=земля",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "services"],
+          "query": [
+            { "key": "query", "value": "земля" }
+          ]
+        },
+        "description": "Список услуг с серверной фильтрацией."
+      }
+    },
+    {
+      "name": "05. GET service by id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/services/{{firstRouteId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "services", "{{firstRouteId}}"]
+        },
+        "description": "Получить одну услугу по id."
+      }
+    },
+    {
+      "name": "06. POST create service with files",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let json = pm.response.json();",
+              "if (json.id) { pm.collectionVariables.set('createdServiceId', String(json.id)); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            { "key": "title", "value": "Экспресс-перелёт к Марсу", "type": "text" },
+            { "key": "from_body", "value": "Земля", "type": "text" },
+            { "key": "to_body", "value": "Марс", "type": "text" },
+            { "key": "description", "value": "Демонстрационная услуга для межпланетной миссии с расчётом перехода.", "type": "text" },
+            { "key": "from_orbit_radius_km", "value": "149600000", "type": "text" },
+            { "key": "to_orbit_radius_km", "value": "227900000", "type": "text" },
+            { "key": "image", "type": "file", "src": [] },
+            { "key": "video", "type": "file", "src": [] }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/services",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "services"]
+        },
+        "description": "Создать новую услугу. Перед запуском выбрать локальные файлы image и video."
+      }
+    },
+    {
+      "name": "07. POST add service to draft",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "let json = pm.response.json();",
+              "if (json.id) { pm.collectionVariables.set('draftRequestId', String(json.id)); }"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"route_id\": {{createdServiceId}}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/draft/items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "draft", "items"]
+        },
+        "description": "Добавить первую услугу в заявку-черновик."
+      }
+    },
+    {
+      "name": "08. PUT update request item",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quantity\": 2,\n  \"segment_order\": 1,\n  \"segment_dry_mass_kg\": 2600,\n  \"segment_isp_sec\": 410\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}/items/{{createdServiceId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}", "items", "{{createdServiceId}}"]
+        },
+        "description": "Изменить поле м-м: количество, порядок, массу и удельный импульс сегмента."
+      }
+    },
+    {
+      "name": "09. DELETE request item",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}/items/{{firstRouteId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}", "items", "{{firstRouteId}}"]
+        },
+        "description": "Удалить услугу из заявки-черновика."
+      }
+    },
+    {
+      "name": "10. GET request by id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}"]
+        },
+        "description": "Получить одну заявку вместе со списком услуг."
+      }
+    },
+    {
+      "name": "11. PUT update request",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"spacecraft_dry_mass_kg\": 3200,\n  \"engine_isp_sec\": 430\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}"]
+        },
+        "description": "Изменить тематические поля заявки."
+      }
+    },
+    {
+      "name": "12. PUT form request",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}/form",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}", "form"]
+        },
+        "description": "Сформировать заявку. Во время операции пересчитывается топливо."
+      }
+    },
+    {
+      "name": "13. PUT moderate request",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"complete\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/requests/{{draftRequestId}}/moderate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "requests", "{{draftRequestId}}", "moderate"]
+        },
+        "description": "Завершить или отклонить заявку модератором. Для показа ошибки вызови этот запрос до формирования."
+      }
+    },
+    {
+      "name": "14. POST register user",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"{{newUsername}}\",\n  \"password\": \"{{newPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "register"]
+        },
+        "description": "Регистрация нового пользователя."
+      }
+    },
+    {
+      "name": "15. POST login stub",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "login"]
+        },
+        "description": "Заглушка аутентификации для лабораторной 4."
+      }
+    },
+    {
+      "name": "16. POST logout stub",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/users/logout",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "logout"]
+        },
+        "description": "Заглушка деавторизации для лабораторной 4."
+      }
+    }
+  ]
+}

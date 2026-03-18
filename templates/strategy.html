@@ -11,18 +11,20 @@
         </header>
         <main>
             <section class="detail-video-wrapper">
-                <video
-                    class="detail-video"
-                    autoplay
-                    muted
-                    loop
-                    playsinline
-                >
-                    <source src="http://localhost:9000/spaceobjects/{{ .route.Video }}" type="video/mp4">
-                </video>
-                <div class="detail-video__overlay">
-                    <h1 class="detail-video__title">{{ .route.Title }}</h1>
-                    <p class="detail-video__subtitle">{{ .route.Description }}</p>
+                <div class="detail-video-frame">
+                    <video
+                        class="detail-video"
+                        autoplay
+                        muted
+                        loop
+                        playsinline
+                    >
+                        <source src="http://localhost:9000/spaceobjects/{{ .route.Video }}" type="video/mp4">
+                    </video>
+                    <div class="detail-video__caption">
+                        <h1 class="detail-video__title">{{ .route.Title }}</h1>
+                        <p class="detail-video__subtitle">{{ .route.Description }}</p>
+                    </div>
                 </div>
             </section>
             <section class="detail-content">

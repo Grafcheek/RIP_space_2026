@@ -5,36 +5,34 @@
     </head>
     <body>
         <header class="site-header site-header-main">
-            <form action="/" method="GET" class="search-form header-search">
-                <input
-                    type="text"
-                    name="query"
-                    class="search-input"
-                    placeholder="Поиск маршрутов и планет"
-                    value="{{ .query }}">
-            </form>
+            <div class="header-spacer"></div>
             <a href="/" class="header-home header-logo-center">
                 <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
             </a>
-            <div class="header-mission">
-                {{ if .hasDraft }}
-                <a href="/missions/{{ .draftID }}" class="calc-button">
-                    <span class="calc-button__label">Расчёты</span>
-                    <span class="calc-button__badge">{{ .draftSize }}</span>
-                    <svg class="calc-button__icon" xmlns="http://www.w3.org/2000/svg" width="16" height="17" viewBox="0 0 16 17" fill="none">
-                        <g>
-                            <g>
-                                <path d="M8 16.5c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm0-15c-3.9 0-7 3.1-7 7 0 3.9 3.1 7 7 7s7-3.1 7-7c0-3.9-3.1-7-7-7z" />
-                            </g>
-                            <g>
-                                <path d="M8 10l2.6-2.6.6.6L8 11.2 4.8 8l.6-.6L8 10z" />
-                            </g>
-                        </g>
-                    </svg>
-                </a>
-                {{ end }}
-            </div>
+            <div class="header-spacer"></div>
         </header>
+        <div class="toolbar">
+            <div class="toolbar-inner">
+                <form action="/" method="GET" class="search-form">
+                    <input
+                        type="text"
+                        name="query"
+                        class="search-input"
+                        placeholder="Поиск маршрутов и планет"
+                        value="{{ .query }}">
+                </form>
+                <div class="toolbar-basket">
+                    {{ if .hasDraft }}
+                    <a href="/missions/{{ .draftID }}" class="system-load-icon" aria-label="Текущая заявка interplanetary flight">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
+                        </svg>
+                        <span class="system-load-icon__badge">{{ .draftSize }}</span>
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
         <div class="space">
             <div class="container">
                 {{ range .routes }}

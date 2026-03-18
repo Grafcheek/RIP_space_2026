@@ -260,7 +260,7 @@ WHERE fr.id = frt.flight_request_id
 	).Error
 }
 
-// CalculateDeltaVms реализует формулу Гомана (как в псевдокоде) по радиусам орбит (км).
+// CalculateDeltaVms реализует формулу Гомана по радиусам орбит (км).
 func CalculateDeltaVms(rEarthKm, rTargetKm float64) float64 {
 	if rEarthKm <= 0 || rTargetKm <= 0 {
 		return 0
@@ -273,10 +273,10 @@ func CalculateDeltaVms(rEarthKm, rTargetKm float64) float64 {
 	a := (r3 + r) / 2
 	v3 := math.Sqrt(muSun / r3)
 	vp := math.Sqrt(muSun * (2/r3 - 1/a))
-	dv1 := vp - v3
+	dv1 := math.Abs(vp - v3)
 	vc := math.Sqrt(muSun / r)
 	va := math.Sqrt(muSun * (2/r - 1/a))
-	dv2 := vc - va
+	dv2 := math.Abs(vc - va)
 	return dv1 + dv2
 }
 

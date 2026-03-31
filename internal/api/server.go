@@ -38,7 +38,6 @@ func StartServer() {
 	r.POST("/basket/add/:id", h.PostAddToDraft)
 	r.POST("/basket/delete/:id", h.PostDeleteDraft)
 	r.POST("/missions/:id/segments/:routeId/recalc", h.PostRecalcSegment)
-	r.POST("/missions/:id/segments/:routeId/delete", h.PostDeleteSegment)
 
 	r.Run()
 	log.Println("Server down")

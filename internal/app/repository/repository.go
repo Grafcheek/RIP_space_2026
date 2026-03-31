@@ -303,7 +303,7 @@ func ToMissionProfile(fr *FlightRequest) MissionProfile {
 	mp := MissionProfile{
 		ID:          fr.ID,
 		Title:       "Заявка на расчёт межпланетного перелёта",
-		Description: "Параметры аппарата и выбранные маршруты для оценки Δv, массы топлива и энергии.",
+		Description: "Параметры аппарата и выбранные маршруты для оценки Δv и массы топлива.",
 		DryMassKg:   fr.DryMassKg,
 		IspSeconds:  fr.IspSeconds,
 	}

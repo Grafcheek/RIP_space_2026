@@ -44,13 +44,16 @@ func (h *Handler) GetRoutes(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
+	basketActive := hasDraft && draftMP.RouteCount > 0
+
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"routes":    routes,
-		"query":     searchQuery,
-		"hasDraft":  hasDraft,
-		"draft":     draftMP,
-		"draftID":   draftMP.ID,
-		"draftSize": draftMP.RouteCount,
+		"routes":       routes,
+		"query":        searchQuery,
+		"hasDraft":     hasDraft,
+		"draft":        draftMP,
+		"draftID":      draftMP.ID,
+		"draftSize":    draftMP.RouteCount,
+		"basketActive": basketActive,
 	})
 }
 
@@ -185,31 +188,6 @@ func (h *Handler) PostRecalcSegment(ctx *gin.Context) {
 	}
 
 	if err := h.Repository.UpdateSegmentParams(demoUserID, missionID, routeID, mass, isp); err != nil {
-		logrus.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-		return
-	}
-
-	ctx.Redirect(http.StatusSeeOther, "/missions/"+missionIDStr)
-}
-
-// PostDeleteSegment — удаление одного маршрута из заявки.
-func (h *Handler) PostDeleteSegment(ctx *gin.Context) {
-	missionIDStr := ctx.Param("id")
-	routeIDStr := ctx.Param("routeId")
-
-	missionID, err := strconv.Atoi(missionIDStr)
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return
-	}
-	routeID, err := strconv.Atoi(routeIDStr)
-	if err != nil {
-		ctx.Status(http.StatusBadRequest)
-		return
-	}
-
-	if err := h.Repository.RemoveRouteFromDraft(demoUserID, missionID, routeID); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return

@@ -222,10 +222,23 @@ img {
     transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
-.system-load-icon:hover {
+.system-load-icon:hover:not(.system-load-icon--disabled) {
     border-color: #ffffff;
     color: #ffffff;
     background: #111111;
+}
+
+.system-load-icon--disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    color: #6b6b70;
+    border-color: #3a3a3e;
+    background: #141416;
+}
+
+.system-load-icon--disabled .system-load-icon__badge {
+    background: #3a3a3e;
+    color: #9a9aa0;
 }
 
 .system-load-icon svg {
@@ -448,19 +461,30 @@ a.card img {
     cursor: pointer;
 }
 
-.system-load-detail__delete {
-    margin-top: 16px;
+.system-load-detail__delete-form {
+    margin: 0;
+    flex-shrink: 0;
 }
 
-.system-load-detail__delete-btn {
-    border: 1px solid #af1108;
-    background: #af1108;
-    color: #ffffff;
-    padding: 10px 14px;
-    font-family: "Public Sans Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-size: 14px;
-    font-weight: 700;
+.system-load-detail__delete-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 1px solid rgba(175, 17, 8, 0.55);
+    background: rgba(175, 17, 8, 0.12);
+    color: #e8e8e8;
     cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.system-load-detail__delete-icon:hover {
+    border-color: var(--color-error);
+    color: #ffffff;
+    background: rgba(175, 17, 8, 0.35);
+    transform: scale(1.04);
 }
 
 /* ===== Блок параметров нагрузки (на странице стратегии) ===== */
@@ -498,6 +522,11 @@ a.card img {
 
 /* ===== Страница заявки (system_load) ===== */
 
+.mission-basket-page {
+    background-color: #000000;
+    color: #ffffff;
+}
+
 .system-load-detail {
     max-width: 1200px;
     margin: 30px auto;
@@ -509,6 +538,20 @@ a.card img {
     border-radius: 0;
     padding: 32px 32px;
     margin-bottom: 32px;
+    border: 1px solid var(--color-border);
+}
+
+.system-load-detail__header-top {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.system-load-detail__header-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .system-load-detail__title {
@@ -525,101 +568,160 @@ a.card img {
     font-weight: 400;
     color: var(--color-muted);
     line-height: 1.6;
-    margin: 0 0 16px 0;
+    margin: 0;
 }
 
-.system-load-detail__params {
+/* ===== Сегменты заявки (карточки, как в Lab 1) ===== */
+
+.basket-segments {
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 8px;
+    flex-direction: column;
+    gap: 12px;
 }
 
-.system-load-detail__param {
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+.basket-segments__head,
+.basket-segment__row {
+    display: grid;
+    grid-template-columns: 88px minmax(120px, 1.1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(6.5rem, 0.85fr) minmax(7.5rem, 0.85fr);
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--color-border);
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.basket-segments__head {
+    background-color: #000000;
+}
+
+.basket-segments__cell {
+    padding: 12px 14px;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 14.08px;
     color: var(--color-muted);
-}
-
-.system-load-detail__param span {
-    color: #ffffff;
-}
-
-/* ===== Таблица стратегий в заявке ===== */
-
-.load-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-}
-
-.load-table thead th {
     text-align: left;
-    font-weight: 600;
-    font-size: 12px;
+}
+
+.basket-segments__head .basket-segments__cell {
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--color-muted);
     padding: 10px 12px;
-    background-color: #000000;
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
     white-space: nowrap;
 }
 
-.load-table thead th:first-child {
+.basket-segments__head .basket-segments__cell:first-child {
     border-left: 1px solid var(--color-border);
-    border-radius: 0;
 }
 
-.load-table thead th:last-child {
+.basket-segments__head .basket-segments__cell:last-child {
     border-right: 1px solid var(--color-border);
-    border-radius: 0;
 }
 
-.load-table tbody tr {
-    background-color: rgba(0, 0, 0, 0.8);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+.basket-segments__cell--thumb {
+    padding: 10px;
 }
 
-.load-table tbody tr:hover td {
+.basket-segments__cell--thumb img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    background: #000000;
+    display: block;
+}
+
+.basket-segments__cell--num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.basket-segments__cell--fuel {
+    text-align: right;
+    justify-self: stretch;
+    padding-right: 16px !important;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.basket-segments__cell--strong {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.basket-segments__cell--highlight {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.basket-segment {
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease;
+}
+
+.basket-segment:hover .basket-segment__row {
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.basket-segment__panel {
+    border: 1px solid var(--color-border);
+    border-top: none;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 14px 16px;
+}
+
+.basket-segment__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 20px;
+}
+
+.basket-segment__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.basket-segment__field-name {
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+.basket-segment__input {
+    width: 120px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    background: #000000;
+    color: #ffffff;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+}
+
+.basket-segment__input:focus {
+    outline: none;
     border-color: #ffffff;
 }
 
-.load-table tbody td {
-    padding: 12px;
-    font-size: 14.08px;
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: var(--color-muted);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    vertical-align: middle;
+.basket-segment__submit {
+    height: 40px;
+    padding: 0 20px;
+    border: 1px solid #ffffff;
+    background: #ffffff;
+    color: #000000;
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
-.load-table tbody td:first-child {
-    border-left: 1px solid var(--color-border);
-    border-radius: 0;
-}
-
-.load-table tbody td:last-child {
-    border-right: 1px solid var(--color-border);
-    border-radius: 0;
-}
-
-.load-table__col-photo {
-    width: 80px;
-}
-
-.load-table__col-photo img {
-    width: 80px;
-    height: 80px;
-    border-radius: 0;
-    object-fit: cover;
-    background-color: #000000;
-}
-
-.load-table__col-result {
-    color: #ffffff !important;
-    font-weight: 600;
+.basket-segment__submit:hover {
+    background: #e8e8e8;
 }
 
 /* ===== Адаптивность ===== */
@@ -646,5 +748,37 @@ a.card img {
 
     .search-input {
         width: 200px;
+    }
+
+    .system-load-detail__header-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .system-load-detail__delete-form {
+        align-self: flex-end;
+    }
+
+    .basket-segments {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .basket-segments__head,
+    .basket-segment__row {
+        min-width: 640px;
+    }
+
+    .basket-segment__form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .basket-segment__input {
+        width: 100%;
+    }
+
+    .basket-segment__submit {
+        width: 100%;
     }
 }

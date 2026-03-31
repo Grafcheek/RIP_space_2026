@@ -7,7 +7,7 @@
         <header class="site-header site-header-main">
             <div class="header-spacer"></div>
             <a href="/" class="header-home header-logo-center">
-                <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
+                <img src="/static/img/logo.png" alt="Interplanetary flight" class="header-home__icon">
             </a>
             <div class="header-spacer"></div>
         </header>
@@ -22,14 +22,14 @@
                         value="{{ .query }}">
                 </form>
                 <div class="toolbar-basket">
-                    {{ $missionCount := len .missions }}
-                    {{ if gt $missionCount 0 }}
-                    {{ $firstMission := index .missions 0 }}
-                    <a href="/missions/{{ $firstMission.ID }}" class="system-load-icon" aria-label="Interplanetary flight">
+                    {{ $n := len .interplanetaryFlightRequests }}
+                    {{ if gt $n 0 }}
+                    {{ $first := index .interplanetaryFlightRequests 0 }}
+                    <a href="/interplanetary-flight-requests/{{ $first.ID }}" class="interplanetary-flight-request-link" aria-label="Interplanetary flight request">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
                             <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
                         </svg>
-                        <span class="system-load-icon__badge">{{ $missionCount }}</span>
+                        <span class="interplanetary-flight-request-link__badge">{{ $n }}</span>
                     </a>
                     {{ end }}
                 </div>

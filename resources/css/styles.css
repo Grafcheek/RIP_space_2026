@@ -92,7 +92,7 @@ img {
     color: #ffffff;
 }
 
-/* ===== Toolbar (поиск + иконка interplanetary flight) ===== */
+/* ===== Toolbar (поиск + interplanetary flight request) ===== */
 
 .toolbar {
     background-color: #000000;
@@ -134,7 +134,7 @@ img {
     justify-content: center;
 }
 
-.header-mission {
+.header-interplanetary-flight-request {
     justify-self: end;
 }
 
@@ -193,9 +193,9 @@ img {
     background-color: #e5e5e5;
 }
 
-/* ===== Иконка interplanetary flight (system_load) ===== */
+/* ===== Ссылка на interplanetary flight request (заявка / корзина) ===== */
 
-.system-load-icon {
+.interplanetary-flight-request-link {
     position: relative;
     display: flex;
     align-items: center;
@@ -209,17 +209,17 @@ img {
     transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
-.system-load-icon:hover {
+.interplanetary-flight-request-link:hover {
     border-color: #ffffff;
     color: #ffffff;
     background: #111111;
 }
 
-.system-load-icon svg {
+.interplanetary-flight-request-link svg {
     color: inherit;
 }
 
-.system-load-icon__badge {
+.interplanetary-flight-request-link__badge {
     position: absolute;
     top: -6px;
     right: -6px;
@@ -323,28 +323,46 @@ a.card img {
     fill: #ffffff;
 }
 
-/* ===== Детальная страница маршрута ===== */
+/* ===== Детальная страница маршрута (вертикальное видео) ===== */
 
 .detail-page {
     background-color: #000000;
+    min-height: 100vh;
 }
 
-.detail-video-wrapper {
-    min-height: calc(100vh - 99px);
+.detail-shorts {
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: center;
-    padding: 32px 16px;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: calc(100vh - 99px);
+    padding: 24px 20px 40px;
+    box-sizing: border-box;
+}
+
+.detail-shorts__video-col {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .detail-video-frame {
     position: relative;
-    width: min(420px, 100%);
-    aspect-ratio: 9 / 16;
     background-color: #000000;
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 20px;
     border: 1px solid #2e2e32;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.detail-video-frame--shorts {
+    width: min(480px, 63vw);
+    aspect-ratio: 9 / 16;
+    max-height: min(720px, calc(100vh - 140px));
 }
 
 .detail-video {
@@ -362,62 +380,102 @@ a.card img {
     right: 0;
     bottom: 0;
     padding: 16px 16px 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.88), transparent 70%);
 }
 
-.detail-video__title {
+.detail-video__caption--minimal {
+    padding: 14px 14px 18px;
+}
+
+.detail-video__route {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 800;
     color: #ffffff;
-    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+    margin: 0;
+    line-height: 1.2;
 }
 
-.detail-video__subtitle {
+.detail-shorts__side {
+    flex: 1;
+    min-width: 0;
+    max-width: 520px;
+    padding: 8px 0 0;
+    color: #ffffff;
+}
+
+.detail-shorts__title {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    line-height: 1.15;
+}
+
+.detail-shorts__description {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.65;
+    margin: 0 0 28px 0;
+}
+
+.detail-shorts__metrics {
+    padding-top: 8px;
+    border-top: 1px solid #2e2e32;
+}
+
+.detail-shorts__metrics-heading {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 16px 0;
+}
+
+.detail-shorts__metric {
+    margin-bottom: 18px;
+}
+
+.detail-shorts__metric:last-child {
+    margin-bottom: 0;
+}
+
+.detail-shorts__metric-label {
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13px;
     font-weight: 400;
+    color: var(--color-muted);
+    margin-bottom: 6px;
+}
+
+.detail-shorts__metric-value {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
     color: #ffffff;
 }
 
-.detail-content {
-    background-color: #ffffff;
-    padding: 32px 24px 48px;
-    max-width: 960px;
-    margin: 0 auto;
-}
+@media (max-width: 880px) {
+    .detail-shorts {
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+    }
 
-.detail-content__heading {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 24px;
-}
+    .detail-video-frame--shorts {
+        width: min(480px, 88vw);
+        max-height: min(640px, 58vh);
+    }
 
-.detail-content__grid {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-}
-
-.detail-content__metric {
-    min-width: 220px;
-}
-
-.detail-content__label {
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--color-muted);
-    margin-bottom: 4px;
-}
-
-.detail-content__value {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: #000000;
+    .detail-shorts__side {
+        max-width: 100%;
+        width: 100%;
+        padding-top: 0;
+    }
 }
 
 /* ===== Блок параметров нагрузки (на странице стратегии) ===== */
@@ -453,22 +511,22 @@ a.card img {
     color: var(--acid);
 }
 
-/* ===== Страница interplanetary flight (system_load) ===== */
+/* ===== Страница interplanetary flight request (interplanetary_flights_requests) ===== */
 
-.system-load-detail {
+.interplanetary-flight-request-page {
     max-width: 1200px;
     margin: 30px auto;
     padding: 0 20px;
 }
 
-.system-load-detail__header-card {
+.interplanetary-flight-request-page__header-card {
     background-color: var(--color-card-soft);
     border-radius: 0;
     padding: 32px 32px;
     margin-bottom: 32px;
 }
 
-.system-load-detail__title {
+.interplanetary-flight-request-page__title {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 29px;
     font-weight: 700;
@@ -476,7 +534,7 @@ a.card img {
     margin-bottom: 12px;
 }
 
-.system-load-detail__description {
+.interplanetary-flight-request-page__description {
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 16px;
     font-weight: 400;
@@ -485,88 +543,76 @@ a.card img {
     margin: 0 0 16px 0;
 }
 
-.system-load-detail__params {
+.interplanetary-flight-request-page__params {
     display: flex;
     flex-wrap: wrap;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
     gap: 16px;
     margin-top: 8px;
 }
 
-.system-load-detail__param {
+.interplanetary-flight-request-page__param {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 14.08px;
     color: var(--color-muted);
+    text-align: right;
 }
 
-.system-load-detail__param span {
+.interplanetary-flight-request-page__param span {
     color: #ffffff;
-}
-
-/* ===== Таблица стратегий в interplanetary flight ===== */
-
-.load-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 10px;
-}
-
-.load-table thead th {
-    text-align: left;
+    font-size: 16px;
     font-weight: 600;
-    font-size: 12px;
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    margin-top: 4px;
+}
+
+/* ===== Строки interplanetary_flights_in_request в заявке ===== */
+
+.interplanetary-flights-in-request-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.interplanetary-flight-in-request-card {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.95fr) minmax(110px, 0.85fr) minmax(110px, 1fr) minmax(110px, 1fr) minmax(130px, 1fr) minmax(100px, 0.85fr) 96px;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    background-color: var(--color-card-soft);
+    border: 1px solid var(--color-border);
+}
+
+.interplanetary-flight-in-request-card--header {
+    background-color: var(--color-card-soft);
+}
+
+.interplanetary-flight-in-request-card__cell {
+    padding: 12px;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14.08px;
     color: var(--color-muted);
-    padding: 10px 12px;
-    background-color: #000000;
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
+    text-align: right;
+}
+
+.interplanetary-flight-in-request-card--header .interplanetary-flight-in-request-card__cell {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
     white-space: nowrap;
 }
 
-.load-table thead th:first-child {
-    border-left: 1px solid var(--color-border);
-    border-radius: 0;
+.interplanetary-flight-in-request-card__cell--image {
+    display: flex;
+    justify-content: flex-end;
+    width: 96px;
 }
 
-.load-table thead th:last-child {
-    border-right: 1px solid var(--color-border);
-    border-radius: 0;
-}
-
-.load-table tbody tr {
-    background-color: rgba(0, 0, 0, 0.8);
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.load-table tbody tr:hover td {
-    border-color: #ffffff;
-}
-
-.load-table tbody td {
-    padding: 12px;
-    font-size: 14.08px;
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: var(--color-muted);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    vertical-align: middle;
-}
-
-.load-table tbody td:first-child {
-    border-left: 1px solid var(--color-border);
-    border-radius: 0;
-}
-
-.load-table tbody td:last-child {
-    border-right: 1px solid var(--color-border);
-    border-radius: 0;
-}
-
-.load-table__col-photo {
-    width: 80px;
-}
-
-.load-table__col-photo img {
+.interplanetary-flight-in-request-card__cell--image img {
     width: 80px;
     height: 80px;
     border-radius: 0;
@@ -574,9 +620,14 @@ a.card img {
     background-color: #000000;
 }
 
-.load-table__col-result {
+.interplanetary-flight-in-request-card__cell--result {
     color: #ffffff !important;
     font-weight: 600;
+}
+
+.interplanetary-flight-in-request-card__cell--meta {
+    font-size: 12px;
+    color: var(--color-muted);
 }
 
 /* ===== Адаптивность ===== */
@@ -603,5 +654,69 @@ a.card img {
 
     .search-input {
         width: 200px;
+    }
+
+    .interplanetary-flight-request-page__params {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .interplanetary-flight-request-page__param {
+        align-items: flex-end;
+        text-align: right;
+    }
+
+    .interplanetary-flight-in-request-card {
+        grid-template-columns: 1fr;
+    }
+
+    .interplanetary-flight-in-request-card--header {
+        display: none;
+    }
+
+    .interplanetary-flight-in-request-card__cell {
+        padding: 10px 12px;
+    }
+
+    .interplanetary-flight-in-request-card__cell::before {
+        display: block;
+        margin-bottom: 4px;
+        font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-muted);
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(1)::before {
+        content: "Топливо (кг)";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(2)::before {
+        content: "Δv (м/с)";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(3)::before {
+        content: "Куда";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(4)::before {
+        content: "Откуда";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(5)::before {
+        content: "Маршрут";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(6)::before {
+        content: "м-м";
+    }
+
+    .interplanetary-flight-in-request-card .interplanetary-flight-in-request-card__cell:nth-child(7)::before {
+        content: "Изображение";
+    }
+
+    .interplanetary-flight-in-request-card__cell--image {
+        width: auto;
+        justify-content: flex-end;
     }
 }

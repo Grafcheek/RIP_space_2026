@@ -6,12 +6,12 @@
     <body class="detail-page">
         <header class="site-header site-header--center-logo">
             <a href="/" class="header-home">
-                <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
+                <img src="/static/img/logo.png" alt="Interplanetary flight" class="header-home__icon">
             </a>
         </header>
-        <main>
-            <section class="detail-video-wrapper">
-                <div class="detail-video-frame">
+        <main class="detail-shorts">
+            <div class="detail-shorts__video-col">
+                <div class="detail-video-frame detail-video-frame--shorts">
                     <video
                         class="detail-video"
                         autoplay
@@ -21,27 +21,24 @@
                     >
                         <source src="http://localhost:9000/spaceobjects/{{ .route.Video }}" type="video/mp4">
                     </video>
-                    <div class="detail-video__caption">
-                        <h1 class="detail-video__title">{{ .route.Title }}</h1>
-                        <p class="detail-video__subtitle">{{ .route.Description }}</p>
+                    <div class="detail-video__caption detail-video__caption--minimal">
+                        <p class="detail-video__route">{{ .route.From }} — {{ .route.To }}</p>
                     </div>
                 </div>
-            </section>
-            <section class="detail-content">
-                {{ if .hasMissionData }}
-                <h2 class="detail-content__heading">Параметры расчёта миссии</h2>
-                <div class="detail-content__grid">
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Характеристическая скорость Δv</div>
-                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.DeltaVms }} м/с</div>
+            </div>
+            <section class="detail-shorts__side">
+                <h1 class="detail-shorts__title">{{ .route.Title }}</h1>
+                <p class="detail-shorts__description">{{ .route.Description }}</p>
+                {{ if .hasFlightInRequestData }}
+                <div class="detail-shorts__metrics">
+                    <h2 class="detail-shorts__metrics-heading">Расчёт (interplanetary_flights_in_request)</h2>
+                    <div class="detail-shorts__metric">
+                        <div class="detail-shorts__metric-label">Характеристическая скорость Δv</div>
+                        <div class="detail-shorts__metric-value">{{ printf "%.0f" .flightInRequest.DeltaVms }} м/с</div>
                     </div>
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Требуемое топливо</div>
-                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.PropellantKg }} кг</div>
-                    </div>
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Оценка энергии</div>
-                        <div class="detail-content__value">{{ printf "%.2e" .missionRoute.EnergyJ }} Дж</div>
+                    <div class="detail-shorts__metric">
+                        <div class="detail-shorts__metric-label">Требуемое топливо</div>
+                        <div class="detail-shorts__metric-value">{{ printf "%.0f" .flightInRequest.PropellantKg }} кг</div>
                     </div>
                 </div>
                 {{ end }}

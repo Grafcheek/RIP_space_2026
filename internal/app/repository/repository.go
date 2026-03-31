@@ -6,6 +6,12 @@ import (
 	"strings"
 )
 
+// Соответствие сущностям ER (interplanetary flight):
+//   InterplanetaryFlight            → interplanetary_flights (каталог перелётов / «услуга»).
+//   InterplanetaryFlightRequest     → interplanetary_flights_requests (заявка).
+//   InterplanetaryFlightInRequest   → interplanetary_flights_in_request (м-м заявка↔перелёт + поля связи и расчёт по сегменту).
+// Lab 1: данные в памяти, без SQL.
+
 // Repository — хранилище данных (Lab 1: данные в массивах, без БД).
 type Repository struct{}
 
@@ -20,43 +26,57 @@ const (
 	g0       = 9.80665           // стандартное ускорение свободного падения, м/с^2
 )
 
-// TransferRoute — услуга: межпланетный перелёт «откуда → куда».
+// InterplanetaryFlight — каталог услуги «межпланетный перелёт» (сущность interplanetary_flights в ER).
 // Расчёты упрощены до гелиоцентрического перехода Гомана (круговые орбиты).
-type TransferRoute struct {
+type InterplanetaryFlight struct {
 	ID          int
 	Title       string
 	From        string
 	To          string
 	Description string
-	Image       string  // ключ изображения в Minio (bucket/объект)
+	Image       string  // image_url / ключ в Minio
 	Video       string  // ключ видео в Minio
 	FromOrbitAU float64 // радиус орбиты отправителя (а.е.)
 	ToOrbitAU   float64 // радиус орбиты получателя (а.е.)
 }
 
-// MissionProfile — interplanetary flight: исходные параметры аппарата и набора перелётов для расчёта.
-type MissionProfile struct {
-	ID          int
+// InterplanetaryFlightRequest — заявка на расчёт (сущность interplanetary_flights_requests в ER).
+// Поля м-м по массам аппарата и ДУ + агрегированный результат расчёта (total_*).
+type InterplanetaryFlightRequest struct {
+	ID int // id заявки
+
 	Title       string
 	Description string
 
-	DryMassKg   float64 // сухая масса аппарата (кг)
-	IspSeconds  float64 // удельный импульс (с)
-	Routes      []MissionRoute
-	RouteCount  int
+	SpacecraftDryMassKg float64 // ER: spacecraft_drymass_kg — «м-м» масса космического аппарата
+	EngineMassKg        float64 // масса двигательной установки (тема варианта)
+	IspSeconds          float64 // удельный импульс для формулы Циолковского
+
+	TotalFuelMassKg float64 // ER: total_fuel_mass_kg — результат: суммарная масса топлива по сегментам
+	TotalDeltaVms     float64 // ER: total_delta_v_kms — у нас хранится суммарное Δv в м/с (аналог)
+
+	FlightsInRequest []InterplanetaryFlightInRequest // строки связи interplanetary_flights_in_request
+	RouteCount       int                             // число сегментов в заявке (для UI / корзина)
 }
 
-// MissionRoute — связь м-м: маршрут + результаты расчёта.
-type MissionRoute struct {
-	Route       TransferRoute
-	DeltaVms    float64 // характеристическая скорость, м/с
-	PropellantKg float64 // требуемая масса топлива, кг (по Циолковскому)
-	EnergyJ     float64 // оценка энергии, Дж (см. CalculateEnergyJ)
+// InterplanetaryFlightInRequest — связь м-м: заявка ↔ перелёт (таблица interplanetary_flights_in_request в ER).
+// Содержит поля связи (порядок, quantity, …) и расчётные поля по сегменту (результат на строку).
+type InterplanetaryFlightInRequest struct {
+	Flight InterplanetaryFlight // FK → interplanetary_flight_id
+
+	SegmentOrder  int     // ER: segment_order
+	Quantity      int     // ER: quantity
+	IsPrimary     bool    // ER: is_primary
+	PayloadMassKg float64 // ER: payload_mass_kg (в демо 0)
+
+	DeltaVms     float64 // ER: delta_v_kms — у нас Δv сегмента в м/с
+	PropellantKg float64 // вклад в топливо по сегменту (кг)
+	EnergyJ      float64 // служебная оценка энергии (не в ER)
 }
 
-// GetRoutes возвращает набор межпланетных маршрутов.
-func (r *Repository) GetRoutes() ([]TransferRoute, error) {
-	routes := []TransferRoute{
+// GetInterplanetaryFlights возвращает каталог межпланетных перелётов (interplanetary_flights).
+func (r *Repository) GetInterplanetaryFlights() ([]InterplanetaryFlight, error) {
+	routes := []InterplanetaryFlight{
 		{
 			ID:          1,
 			Title:       "Юпитер",
@@ -101,7 +121,7 @@ func (r *Repository) GetRoutes() ([]TransferRoute, error) {
 			FromOrbitAU: 1.000,
 			ToOrbitAU:   30.110,
 		},
-		// Обратные interplanetary flight: с планет обратно на Землю (в одном столбце под перелётами «туда»).
+		// Обратные interplanetary flights: с планет обратно на Землю.
 		{
 			ID:          5,
 			Title:       "Обратный с Юпитера",
@@ -135,31 +155,20 @@ func (r *Repository) GetRoutes() ([]TransferRoute, error) {
 			FromOrbitAU: 19.218,
 			ToOrbitAU:   1.000,
 		},
-		{
-			ID:          8,
-			Title:       "Обратный с Нептуна",
-			From:        "Нептун",
-			To:          "Земля",
-			Description: "Самый дальний обратный перелёт: с орбиты Нептуна обратно к Земле. В той же упрощённой модели перехода Гомана оцениваем требуемую характеристическую скорость и топливо.",
-			Image:       "Earth.jpg",
-			Video:       "Earth_vid.mp4",
-			FromOrbitAU: 30.110,
-			ToOrbitAU:   1.000,
-		},
 	}
 
 	if len(routes) == 0 {
-		return nil, fmt.Errorf("массив маршрутов пуст")
+		return nil, fmt.Errorf("каталог interplanetary flights пуст")
 	}
 
 	return routes, nil
 }
 
-// GetRoute возвращает маршрут по ID.
-func (r *Repository) GetRoute(id int) (TransferRoute, error) {
-	routes, err := r.GetRoutes()
+// GetInterplanetaryFlightByID возвращает перелёт по id (interplanetary_flights.id).
+func (r *Repository) GetInterplanetaryFlightByID(id int) (InterplanetaryFlight, error) {
+	routes, err := r.GetInterplanetaryFlights()
 	if err != nil {
-		return TransferRoute{}, err
+		return InterplanetaryFlight{}, err
 	}
 
 	for _, rt := range routes {
@@ -167,12 +176,12 @@ func (r *Repository) GetRoute(id int) (TransferRoute, error) {
 			return rt, nil
 		}
 	}
-	return TransferRoute{}, fmt.Errorf("маршрут не найден")
+	return InterplanetaryFlight{}, fmt.Errorf("interplanetary flight не найден")
 }
 
-// SearchRoutes возвращает маршруты, содержащие подстроку в названии/планетах.
-func (r *Repository) SearchRoutes(query string) ([]TransferRoute, error) {
-	routes, err := r.GetRoutes()
+// SearchInterplanetaryFlights фильтрует каталог по названию и планетам.
+func (r *Repository) SearchInterplanetaryFlights(query string) ([]InterplanetaryFlight, error) {
+	routes, err := r.GetInterplanetaryFlights()
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +191,7 @@ func (r *Repository) SearchRoutes(query string) ([]TransferRoute, error) {
 		return routes, nil
 	}
 
-	var result []TransferRoute
+	var result []InterplanetaryFlight
 	for _, rt := range routes {
 		if strings.Contains(strings.ToLower(rt.Title), q) ||
 			strings.Contains(strings.ToLower(rt.From), q) ||
@@ -222,7 +231,6 @@ func CalculatePropellantKg(dryMassKg, deltaVms, ispSeconds float64) float64 {
 }
 
 // CalculateEnergyJ даёт простую оценку энергии на «разгон» под Δv (не орбитальная механика).
-// Используем E = 0.5 * m0 * Δv^2, где m0 = dryMass + propellant.
 func CalculateEnergyJ(dryMassKg, propellantKg, deltaVms float64) float64 {
 	if deltaVms <= 0 {
 		return 0
@@ -234,89 +242,104 @@ func CalculateEnergyJ(dryMassKg, propellantKg, deltaVms float64) float64 {
 	return 0.5 * m0 * deltaVms * deltaVms
 }
 
-func (r *Repository) buildMissionProfile(id int, title, description string, routeIDs []int, dryMassKg, ispSeconds float64) (MissionProfile, error) {
-	routes, err := r.GetRoutes()
+func (r *Repository) buildInterplanetaryFlightRequest(id int, title, description string, flightIDs []int, spacecraftDryMassKg, engineMassKg, ispSeconds float64) (InterplanetaryFlightRequest, error) {
+	catalog, err := r.GetInterplanetaryFlights()
 	if err != nil {
-		return MissionProfile{}, err
+		return InterplanetaryFlightRequest{}, err
 	}
 
-	rtMap := make(map[int]TransferRoute, len(routes))
-	for _, rt := range routes {
-		rtMap[rt.ID] = rt
+	flightMap := make(map[int]InterplanetaryFlight, len(catalog))
+	for _, f := range catalog {
+		flightMap[f.ID] = f
 	}
 
-	var missionRoutes []MissionRoute
-	for _, rid := range routeIDs {
-		rt, ok := rtMap[rid]
+	var rows []InterplanetaryFlightInRequest
+	var totalFuel, totalDv float64
+	segmentOrder := 0
+
+	for _, fid := range flightIDs {
+		fl, ok := flightMap[fid]
 		if !ok {
 			continue
 		}
+		segmentOrder++
 
-		dv := CalculateHohmannDeltaVms(rt.FromOrbitAU, rt.ToOrbitAU)
-		prop := CalculatePropellantKg(dryMassKg, dv, ispSeconds)
-		energy := CalculateEnergyJ(dryMassKg, prop, dv)
+		dv := CalculateHohmannDeltaVms(fl.FromOrbitAU, fl.ToOrbitAU)
+		prop := CalculatePropellantKg(spacecraftDryMassKg, dv, ispSeconds)
+		energy := CalculateEnergyJ(spacecraftDryMassKg, prop, dv)
+		totalFuel += prop
+		totalDv += dv
 
-		missionRoutes = append(missionRoutes, MissionRoute{
-			Route:        rt,
-			DeltaVms:     dv,
-			PropellantKg: prop,
-			EnergyJ:      energy,
+		rows = append(rows, InterplanetaryFlightInRequest{
+			Flight:        fl,
+			SegmentOrder:  segmentOrder,
+			Quantity:      1,
+			IsPrimary:     segmentOrder == 1,
+			PayloadMassKg: 0,
+			DeltaVms:      dv,
+			PropellantKg:  prop,
+			EnergyJ:       energy,
 		})
 	}
 
-	return MissionProfile{
-		ID:          id,
-		Title:       title,
-		Description: description,
-		DryMassKg:   dryMassKg,
-		IspSeconds:  ispSeconds,
-		Routes:      missionRoutes,
-		RouteCount:  len(missionRoutes),
+	return InterplanetaryFlightRequest{
+		ID:                  id,
+		Title:               title,
+		Description:         description,
+		SpacecraftDryMassKg: spacecraftDryMassKg,
+		EngineMassKg:        engineMassKg,
+		IspSeconds:          ispSeconds,
+		TotalFuelMassKg:     totalFuel,
+		TotalDeltaVms:       totalDv,
+		FlightsInRequest:    rows,
+		RouteCount:          len(rows),
 	}, nil
 }
 
-// GetMissionProfiles возвращает interplanetary flight на расчёт.
-func (r *Repository) GetMissionProfiles() ([]MissionProfile, error) {
-	profile, err := r.buildMissionProfile(
+// GetInterplanetaryFlightRequests список заявок (interplanetary_flights_requests).
+func (r *Repository) GetInterplanetaryFlightRequests() ([]InterplanetaryFlightRequest, error) {
+	req, err := r.buildInterplanetaryFlightRequest(
 		1,
-		"Расчёт Δv и топлива для межпланетного перелёта",
-		"Заявка на расчёт межпланетного перелёта с фиксированными параметрами аппарата (Lab 1: без редактирования). Для каждого маршрута считаем характеристическую скорость Δv, массу топлива по Циолковскому и грубую оценку энергии.",
-		[]int{1, 5, 2, 6, 3, 7, 4, 8},
-		2_000, // сухая масса, кг
-		320,   // Isp, с (условный химический двигатель)
+		"Расчёт параметров межпланетного перелёта",
+		"Заявка на расчёт характеристической скорости Δv и необходимого количества топлива для указанных масс космического аппарата и двигательной установки.",
+		[]int{1, 5, 2, 6, 3, 7, 4},
+		2_000,
+		320,
+		320,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return []MissionProfile{profile}, nil
+	return []InterplanetaryFlightRequest{req}, nil
 }
 
-// GetMissionProfile возвращает interplanetary flight по ID.
-func (r *Repository) GetMissionProfile(id int) (MissionProfile, error) {
-	profiles, err := r.GetMissionProfiles()
+// GetInterplanetaryFlightRequest заявка по id (interplanetary_flights_requests.id).
+func (r *Repository) GetInterplanetaryFlightRequest(id int) (InterplanetaryFlightRequest, error) {
+	requests, err := r.GetInterplanetaryFlightRequests()
 	if err != nil {
-		return MissionProfile{}, err
+		return InterplanetaryFlightRequest{}, err
 	}
-	for _, p := range profiles {
-		if p.ID == id {
-			return p, nil
+	for _, req := range requests {
+		if req.ID == id {
+			return req, nil
 		}
 	}
-	return MissionProfile{}, fmt.Errorf("interplanetary flight не найдена")
+	return InterplanetaryFlightRequest{}, fmt.Errorf("interplanetary flight request не найдена")
 }
 
-// GetMissionRouteForRoute ищет запись м-м для маршрута внутри interplanetary flight (для детальной страницы).
-func (r *Repository) GetMissionRouteForRoute(routeID int) (*MissionRoute, error) {
-	profiles, err := r.GetMissionProfiles()
+// GetInterplanetaryFlightInRequestForFlight строка м-м для перелёта внутри заявки (детальная страница interplanetary flight).
+func (r *Repository) GetInterplanetaryFlightInRequestForFlight(flightID int) (*InterplanetaryFlightInRequest, error) {
+	requests, err := r.GetInterplanetaryFlightRequests()
 	if err != nil {
 		return nil, err
 	}
-	for _, p := range profiles {
-		for _, mr := range p.Routes {
-			if mr.Route.ID == routeID {
-				return &mr, nil
+	for ri := range requests {
+		req := &requests[ri]
+		for j := range req.FlightsInRequest {
+			if req.FlightsInRequest[j].Flight.ID == flightID {
+				return &req.FlightsInRequest[j], nil
 			}
 		}
 	}
-	return nil, fmt.Errorf("маршрут не найден в interplanetary flight")
+	return nil, fmt.Errorf("interplanetary flight не найден в заявке")
 }

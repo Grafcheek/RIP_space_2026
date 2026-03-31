@@ -28,7 +28,8 @@ func StartServer() {
 
 	r.GET("/", h.GetRoutes)
 	r.GET("/routes/:id", h.GetRoute)
-	r.GET("/missions/:id", h.GetMission)
+	// interplanetary_flights_requests (заявка / «корзина»)
+	r.GET("/interplanetary-flight-requests/:id", h.GetInterplanetaryFlightRequest)
 
 	r.Run()
 	log.Println("Server down")

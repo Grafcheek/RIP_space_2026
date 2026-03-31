@@ -21,28 +21,28 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-// GetRoutes — главная страница: каталог межпланетных маршрутов + иконка interplanetary flight (миссии).
+// GetRoutes — главная: каталог interplanetary flights + корзина (interplanetary flight request).
 func (h *Handler) GetRoutes(ctx *gin.Context) {
 	searchQuery := ctx.Query("query")
 
-	routes, err := h.Repository.SearchRoutes(searchQuery)
+	routes, err := h.Repository.SearchInterplanetaryFlights(searchQuery)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	missions, err := h.Repository.GetMissionProfiles()
+	interplanetaryFlightRequests, err := h.Repository.GetInterplanetaryFlightRequests()
 	if err != nil {
 		logrus.Error(err)
 	}
 
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"routes":   routes,
-		"query":    searchQuery,
-		"missions": missions,
+		"routes":                       routes,
+		"query":                        searchQuery,
+		"interplanetaryFlightRequests": interplanetaryFlightRequests,
 	})
 }
 
-// GetRoute — детальная страница маршрута (Земля → планета) с расчётами.
+// GetRoute — детальная страница одного interplanetary flight + расчёт из строки interplanetary_flights_in_request.
 func (h *Handler) GetRoute(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 
@@ -51,35 +51,35 @@ func (h *Handler) GetRoute(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	route, err := h.Repository.GetRoute(id)
+	route, err := h.Repository.GetInterplanetaryFlightByID(id)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	missionRoute, err := h.Repository.GetMissionRouteForRoute(id)
-	hasMissionData := err == nil && missionRoute != nil
+	flightInRequest, err := h.Repository.GetInterplanetaryFlightInRequestForFlight(id)
+	hasFlightInRequestData := err == nil && flightInRequest != nil
 
 	ctx.HTML(http.StatusOK, "strategy.html", gin.H{
-		"route":          route,
-		"missionRoute":   missionRoute,
-		"hasMissionData": hasMissionData,
+		"route":                  route,
+		"flightInRequest":        flightInRequest,
+		"hasFlightInRequestData": hasFlightInRequestData,
 	})
 }
 
-// GetMission — страница interplanetary flight: профиль миссии и таблица маршрутов с Δv, топливом и энергией.
-func (h *Handler) GetMission(ctx *gin.Context) {
+// GetInterplanetaryFlightRequest — страница заявки interplanetary_flights_requests и строк interplanetary_flights_in_request.
+func (h *Handler) GetInterplanetaryFlightRequest(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	mission, err := h.Repository.GetMissionProfile(id)
+	interplanetaryFlightRequest, err := h.Repository.GetInterplanetaryFlightRequest(id)
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	ctx.HTML(http.StatusOK, "system_load.html", gin.H{
-		"mission": mission,
+	ctx.HTML(http.StatusOK, "interplanetary_flight_request.html", gin.H{
+		"interplanetaryFlightRequest": interplanetaryFlightRequest,
 	})
 }

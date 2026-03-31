@@ -1,0 +1,87 @@
+<html lang="ru">
+    <head>
+        <title>{{ .interplanetaryFlightRequest.Title }}</title>
+        <link rel="stylesheet" href="/static/css/styles.css">
+    </head>
+    <body>
+        <header class="site-header site-header-main">
+            <div class="header-spacer"></div>
+            <a href="/" class="header-home header-logo-center">
+                <img src="/static/img/logo.png" alt="Interplanetary flight" class="header-home__icon">
+            </a>
+            <div class="header-spacer"></div>
+        </header>
+        <div class="toolbar">
+            <div class="toolbar-inner">
+                <form action="/" method="GET" class="search-form">
+                    <input
+                        type="text"
+                        name="query"
+                        class="search-input"
+                        placeholder="Поиск маршрутов и планет"
+                        value="">
+                </form>
+                <div class="toolbar-basket">
+                    <a href="/interplanetary-flight-requests/{{ .interplanetaryFlightRequest.ID }}" class="interplanetary-flight-request-link" aria-label="Interplanetary flight request">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
+                        </svg>
+                        <span class="interplanetary-flight-request-link__badge">{{ .interplanetaryFlightRequest.RouteCount }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="interplanetary-flight-request-page">
+            <div class="interplanetary-flight-request-page__header-card">
+                <h1 class="interplanetary-flight-request-page__title">{{ .interplanetaryFlightRequest.Title }}</h1>
+                <p class="interplanetary-flight-request-page__description">{{ .interplanetaryFlightRequest.Description }}</p>
+                <div class="interplanetary-flight-request-page__params">
+                    <div class="interplanetary-flight-request-page__param">
+                        Сегментов в заявке (interplanetary_flights_in_request)
+                        <span>{{ .interplanetaryFlightRequest.RouteCount }}</span>
+                    </div>
+                    <div class="interplanetary-flight-request-page__param">
+                        Масса двигательной установки
+                        <span>{{ printf "%.0f" .interplanetaryFlightRequest.EngineMassKg }} кг</span>
+                    </div>
+                    <div class="interplanetary-flight-request-page__param">
+                        Масса КА (spacecraft_drymass_kg)
+                        <span>{{ printf "%.0f" .interplanetaryFlightRequest.SpacecraftDryMassKg }} кг</span>
+                    </div>
+                    <div class="interplanetary-flight-request-page__param">
+                        Результат: total_delta_v (сумма Δv, м/с)
+                        <span>{{ printf "%.0f" .interplanetaryFlightRequest.TotalDeltaVms }}</span>
+                    </div>
+                    <div class="interplanetary-flight-request-page__param">
+                        Результат: total_fuel_mass_kg
+                        <span>{{ printf "%.0f" .interplanetaryFlightRequest.TotalFuelMassKg }} кг</span>
+                    </div>
+                </div>
+            </div>
+            <div class="interplanetary-flights-in-request-list">
+                <div class="interplanetary-flight-in-request-card interplanetary-flight-in-request-card--header" aria-hidden="true">
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">Топливо (кг)</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">Δv (м/с)</div>
+                    <div class="interplanetary-flight-in-request-card__cell">Куда</div>
+                    <div class="interplanetary-flight-in-request-card__cell">Откуда</div>
+                    <div class="interplanetary-flight-in-request-card__cell">Маршрут</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--meta">м-м</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--image">Изображение</div>
+                </div>
+                {{ range .interplanetaryFlightRequest.FlightsInRequest }}
+                <div class="interplanetary-flight-in-request-card">
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">{{ printf "%.0f" .PropellantKg }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">{{ printf "%.0f" .DeltaVms }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell">{{ .Flight.To }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell">{{ .Flight.From }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell">{{ .Flight.Title }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--meta">#{{ .SegmentOrder }} ×{{ .Quantity }}{{ if .IsPrimary }} · основной{{ end }}</div>
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--image">
+                        <img src="http://localhost:9000/spaceobjects/{{ .Flight.Image }}" alt="{{ .Flight.Title }}">
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </body>
+</html>

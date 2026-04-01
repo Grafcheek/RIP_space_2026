@@ -4,11 +4,37 @@
         <link rel="stylesheet" href="/static/css/styles.css">
     </head>
     <body class="detail-page">
-        <header class="site-header site-header--center-logo">
-            <a href="/" class="header-home">
+        <header class="site-header site-header-main">
+            <div class="header-spacer"></div>
+            <a href="/" class="header-home header-logo-center">
                 <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
             </a>
+            <div class="header-spacer"></div>
         </header>
+        <div class="toolbar">
+            <div class="toolbar-inner">
+                <form action="/" method="GET" class="search-form">
+                    <input
+                        type="text"
+                        name="query"
+                        class="search-input"
+                        placeholder="Поиск маршрутов и планет"
+                        value="{{ .query }}">
+                </form>
+                <div class="toolbar-basket">
+                    {{ if .basketActive }}
+                    <a href="/missions/{{ .draftID }}" class="system-load-icon" aria-label="Текущая заявка interplanetary flight">
+                    {{ else }}
+                    <span class="system-load-icon system-load-icon--disabled" role="img" aria-label="Заявка пуста" title="Заявка пуста">
+                    {{ end }}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
+                        </svg>
+                        <span class="system-load-icon__badge">{{ .draftSize }}</span>
+                    {{ if .basketActive }}</a>{{ else }}</span>{{ end }}
+                </div>
+            </div>
+        </div>
         <main>
             <section class="detail-video-wrapper">
                 <div class="detail-video-frame">

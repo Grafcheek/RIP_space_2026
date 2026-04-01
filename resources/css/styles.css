@@ -222,10 +222,23 @@ img {
     transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
-.system-load-icon:hover {
+.system-load-icon:hover:not(.system-load-icon--disabled) {
     border-color: #ffffff;
     color: #ffffff;
     background: #111111;
+}
+
+.system-load-icon--disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    color: #6b6b70;
+    border-color: #3a3a3e;
+    background: #141416;
+}
+
+.system-load-icon--disabled .system-load-icon__badge {
+    background: #3a3a3e;
+    color: #9a9aa0;
 }
 
 .system-load-icon svg {
@@ -343,7 +356,8 @@ a.card img {
 }
 
 .detail-video-wrapper {
-    min-height: calc(100vh - 99px);
+    /* шапка каталога + тулбар (как на главной) */
+    min-height: calc(100vh - 99px - 65px);
     display: flex;
     align-items: center;
     justify-content: center;

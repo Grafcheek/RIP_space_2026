@@ -41,32 +41,32 @@ func StartServer() {
 	r.POST("/missions/:id/segments/:routeId/recalc", h.PostRecalcSegment)
 	r.POST("/missions/:id/segments/:routeId/delete", h.PostDeleteSegment)
 
-	// REST API для SPA (лаб. 3)
+	// REST API для SPA (лаб. 3) — пути в тематике interplanetary flight
 	apiGroup := r.Group("/api")
 	{
-		// Домен услуги
-		apiGroup.GET("/services", h.APIGetServices)
-		apiGroup.GET("/services/:id", h.APIGetService)
-		apiGroup.POST("/services", h.APICreateService)
+		// Домен межпланетного перелёта (услуга)
+		apiGroup.GET("/interplanetaryflights", h.APIListInterplanetaryFlights)
+		apiGroup.GET("/interplanetaryflights/:id", h.APIGetInterplanetaryFlight)
+		apiGroup.POST("/interplanetaryflights", h.APICreateInterplanetaryFlight)
 
-		// Домен м-м (услуги в заявке)
-		apiGroup.POST("/requests/draft/items", h.APIAddToDraft)
-		apiGroup.PUT("/requests/:id/items/:routeId", h.APIUpdateRequestItem)
-		apiGroup.DELETE("/requests/:id/items/:routeId", h.APIDeleteRequestItem)
+		// Домен м-м (перелёт в заявке)
+		apiGroup.POST("/interplanetaryflightrequests/draft/items", h.APIAddInterplanetaryFlightToDraftRequest)
+		apiGroup.PUT("/interplanetaryflightrequests/:id/items/:routeId", h.APIUpdateInterplanetaryFlightInRequest)
+		apiGroup.DELETE("/interplanetaryflightrequests/:id/items/:routeId", h.APIDeleteInterplanetaryFlightInRequest)
 
-		// Домен заявки
-		apiGroup.GET("/requests/cart-icon", h.APICartIcon)
-		apiGroup.GET("/requests", h.APIGetRequests)
-		apiGroup.GET("/requests/:id", h.APIGetRequest)
-		apiGroup.PUT("/requests/:id", h.APIUpdateRequest)
-		apiGroup.PUT("/requests/:id/form", h.APIFormRequest)
-		apiGroup.PUT("/requests/:id/moderate", h.APIModerateRequest)
-		apiGroup.DELETE("/requests/:id", h.APIDeleteRequest)
+		// Домен заявки на межпланетный перелёт (interplanetary flight request)
+		apiGroup.GET("/interplanetaryflightrequests/cart-icon", h.APIGetInterplanetaryFlightRequestCartIcon)
+		apiGroup.GET("/interplanetaryflightrequests", h.APIListInterplanetaryFlightRequests)
+		apiGroup.GET("/interplanetaryflightrequests/:id", h.APIGetInterplanetaryFlightRequest)
+		apiGroup.PUT("/interplanetaryflightrequests/:id", h.APIUpdateInterplanetaryFlightRequest)
+		apiGroup.PUT("/interplanetaryflightrequests/:id/form", h.APIFormInterplanetaryFlightRequest)
+		apiGroup.PUT("/interplanetaryflightrequests/:id/moderate", h.APIModerateInterplanetaryFlightRequest)
+		apiGroup.DELETE("/interplanetaryflightrequests/:id", h.APIDeleteInterplanetaryFlightRequest)
 
-		// Домен пользователь
-		apiGroup.POST("/users/register", h.APIRegisterUser)
-		apiGroup.POST("/users/login", h.APILoginUser)
-		apiGroup.POST("/users/logout", h.APILogoutUser)
+		// Домен пользователя сервиса межпланетных перелётов
+		apiGroup.POST("/interplanetaryflightusers/register", h.APIRegisterInterplanetaryFlightsUser)
+		apiGroup.POST("/interplanetaryflightusers/login", h.APILoginInterplanetaryFlightsUser)
+		apiGroup.POST("/interplanetaryflightusers/logout", h.APILogoutInterplanetaryFlightsUser)
 	}
 
 	r.Run()

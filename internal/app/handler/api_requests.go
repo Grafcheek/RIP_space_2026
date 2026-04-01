@@ -11,9 +11,9 @@ import (
 	"web_backend/internal/app/repository"
 )
 
-// APICartIcon возвращает информацию о корзине (текущей заявке-черновике).
-// GET /api/requests/cart-icon
-func (h *Handler) APICartIcon(ctx *gin.Context) {
+// APIGetInterplanetaryFlightRequestCartIcon — иконка корзины (черновик заявки на межпланетный перелёт).
+// GET /api/interplanetaryflightrequests/cart-icon
+func (h *Handler) APIGetInterplanetaryFlightRequestCartIcon(ctx *gin.Context) {
 	userID := CurrentUserID()
 
 	fr, err := h.Repository.GetDraft(userID)
@@ -37,9 +37,9 @@ func (h *Handler) APICartIcon(ctx *gin.Context) {
 	})
 }
 
-// APIGetRequests возвращает список заявок с фильтрацией по статусу и диапазону даты формирования.
-// GET /api/requests?status=&from=&to=
-func (h *Handler) APIGetRequests(ctx *gin.Context) {
+// APIListInterplanetaryFlightRequests — список заявок на межпланетный перелёт (статус, даты формирования).
+// GET /api/interplanetaryflightrequests?status=&from=&to=
+func (h *Handler) APIListInterplanetaryFlightRequests(ctx *gin.Context) {
 	status := ctx.Query("status")
 
 	var formedFrom, formedTo *time.Time
@@ -66,9 +66,9 @@ func (h *Handler) APIGetRequests(ctx *gin.Context) {
 	})
 }
 
-// APIGetRequest возвращает одну заявку с услугами.
-// GET /api/requests/:id
-func (h *Handler) APIGetRequest(ctx *gin.Context) {
+// APIGetInterplanetaryFlightRequest — одна заявка на межпланетный перелёт с перелётами в составе.
+// GET /api/interplanetaryflightrequests/:id
+func (h *Handler) APIGetInterplanetaryFlightRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -86,7 +86,7 @@ func (h *Handler) APIGetRequest(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, repository.ToMissionProfile(fr))
+	ctx.JSON(http.StatusOK, buildInterplanetaryFlightRequestDetail(fr))
 }
 
 type updateRequestPayload struct {
@@ -94,9 +94,9 @@ type updateRequestPayload struct {
 	IspSeconds *float64 `json:"engine_isp_sec"`
 }
 
-// APIUpdateRequest изменяет тематические поля заявки.
-// PUT /api/requests/:id
-func (h *Handler) APIUpdateRequest(ctx *gin.Context) {
+// APIUpdateInterplanetaryFlightRequest — тематические поля заявки на межпланетный перелёт.
+// PUT /api/interplanetaryflightrequests/:id
+func (h *Handler) APIUpdateInterplanetaryFlightRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -118,9 +118,9 @@ func (h *Handler) APIUpdateRequest(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// APIFormRequest выполняет формирование заявки создателем.
-// PUT /api/requests/:id/form
-func (h *Handler) APIFormRequest(ctx *gin.Context) {
+// APIFormInterplanetaryFlightRequest — формирование заявки на межпланетный перелёт создателем.
+// PUT /api/interplanetaryflightrequests/:id/form
+func (h *Handler) APIFormInterplanetaryFlightRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -135,16 +135,24 @@ func (h *Handler) APIFormRequest(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusNoContent)
+	fr, err := h.Repository.GetRequestWithItems(CurrentUserID(), id)
+	if err != nil {
+		logrus.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	// 200 + тело: в Postman видно результат формирования без отдельного GET (преподавательский сценарий).
+	ctx.JSON(http.StatusOK, buildInterplanetaryFlightRequestDetail(fr))
 }
 
 type moderateRequestPayload struct {
 	Action string `json:"action" binding:"required"` // "complete" | "reject"
 }
 
-// APIModerateRequest завершает или отклоняет сформированную заявку модератором.
-// PUT /api/requests/:id/moderate
-func (h *Handler) APIModerateRequest(ctx *gin.Context) {
+// APIModerateInterplanetaryFlightRequest — завершение или отклонение сформированной заявки модератором.
+// PUT /api/interplanetaryflightrequests/:id/moderate
+func (h *Handler) APIModerateInterplanetaryFlightRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -168,9 +176,9 @@ func (h *Handler) APIModerateRequest(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// APIDeleteRequest логически удаляет заявку-черновик.
-// DELETE /api/requests/:id
-func (h *Handler) APIDeleteRequest(ctx *gin.Context) {
+// APIDeleteInterplanetaryFlightRequest — логическое удаление черновика заявки на межпланетный перелёт.
+// DELETE /api/interplanetaryflightrequests/:id
+func (h *Handler) APIDeleteInterplanetaryFlightRequest(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)

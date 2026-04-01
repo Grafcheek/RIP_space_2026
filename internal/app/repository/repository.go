@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -423,6 +424,9 @@ func (r *Repository) FormRequest(userID, id int) error {
 		if err := tx.Preload("Items.Route").
 			Where("id = ? AND created_by = ? AND status = 'draft'", id, userID).
 			First(&fr).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("нет черновика interplanetary flight request с id=%d для пользователя id=%d (нужны status=draft и created_by=%d; возьмите id из GET /api/interplanetaryflightrequests/cart-icon или создайте черновик POST /api/interplanetaryflightrequests/draft/items)", id, userID, userID)
+			}
 			return err
 		}
 

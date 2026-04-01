@@ -14,9 +14,9 @@ import (
 	"web_backend/internal/app/repository"
 )
 
-// APIGetServices возвращает список услуг (маршрутов) с фильтрацией по теме.
-// GET /api/services?query=...
-func (h *Handler) APIGetServices(ctx *gin.Context) {
+// APIListInterplanetaryFlights возвращает список межпланетных перелётов с фильтрацией.
+// GET /api/interplanetaryflights?query=...
+func (h *Handler) APIListInterplanetaryFlights(ctx *gin.Context) {
 	searchQuery := ctx.Query("query")
 
 	routes, err := h.Repository.SearchRoutes(searchQuery)
@@ -31,9 +31,9 @@ func (h *Handler) APIGetServices(ctx *gin.Context) {
 	})
 }
 
-// APIGetService возвращает одну услугу по ID.
+// APIGetInterplanetaryFlight возвращает один межпланетный перелёт по ID.
 // GET /api/services/:id
-func (h *Handler) APIGetService(ctx *gin.Context) {
+func (h *Handler) APIGetInterplanetaryFlight(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -59,9 +59,9 @@ type createServiceRequest struct {
 	ToOrbitKm   float64 `form:"to_orbit_radius_km" binding:"required"`
 }
 
-// APICreateService добавляет новую услугу и загружает файлы в Minio-совместимое хранилище.
-// POST /api/services (multipart/form-data)
-func (h *Handler) APICreateService(ctx *gin.Context) {
+// APICreateInterplanetaryFlight добавляет новый межпланетный перелёт и медиа в MinIO-совместимое хранилище.
+// POST /api/interplanetaryflights (multipart/form-data)
+func (h *Handler) APICreateInterplanetaryFlight(ctx *gin.Context) {
 	var req createServiceRequest
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Status(http.StatusBadRequest)

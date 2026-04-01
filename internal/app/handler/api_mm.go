@@ -9,9 +9,9 @@ import (
 	"web_backend/internal/app/repository"
 )
 
-// APIDeleteRequestItem удаляет услугу из заявки-черновика.
-// DELETE /api/requests/:id/items/:routeId
-func (h *Handler) APIDeleteRequestItem(ctx *gin.Context) {
+// APIDeleteInterplanetaryFlightInRequest — удаление межпланетного перелёта из строки м-м заявки.
+// DELETE /api/interplanetaryflightrequests/:id/items/:routeId
+func (h *Handler) APIDeleteInterplanetaryFlightInRequest(ctx *gin.Context) {
 	missionID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -39,9 +39,9 @@ type updateMMRequest struct {
 	IspSec       *float64 `json:"segment_isp_sec"`
 }
 
-// APIUpdateRequestItem изменяет параметры м-м строки (количество, порядок, параметры сегмента).
+// APIUpdateInterplanetaryFlightInRequest — поля м-м (количество, порядок, параметры сегмента перелёта).
 // PUT /api/requests/:id/items/:routeId
-func (h *Handler) APIUpdateRequestItem(ctx *gin.Context) {
+func (h *Handler) APIUpdateInterplanetaryFlightInRequest(ctx *gin.Context) {
 	missionID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -72,9 +72,9 @@ type addToDraftRequest struct {
 	RouteID int `json:"route_id" binding:"required"`
 }
 
-// APIAddToDraft добавляет услугу в заявку-черновик, при необходимости создавая её.
-// POST /api/requests/draft/items
-func (h *Handler) APIAddToDraft(ctx *gin.Context) {
+// APIAddInterplanetaryFlightToDraftRequest — добавление межпланетного перелёта в черновик заявки.
+// POST /api/interplanetaryflightrequests/draft/items
+func (h *Handler) APIAddInterplanetaryFlightToDraftRequest(ctx *gin.Context) {
 	var req addToDraftRequest
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.Status(http.StatusBadRequest)
@@ -88,5 +88,7 @@ func (h *Handler) APIAddToDraft(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, repository.ToMissionProfile(fr))
+	mp := repository.ToMissionProfile(fr)
+	mp.CanDelete = fr.Status == "draft"
+	ctx.JSON(http.StatusOK, mp)
 }

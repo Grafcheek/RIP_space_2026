@@ -22,14 +22,16 @@
                         value="{{ .query }}">
                 </form>
                 <div class="toolbar-basket">
-                    {{ if .hasDraft }}
+                    {{ if .basketActive }}
                     <a href="/missions/{{ .draftID }}" class="system-load-icon" aria-label="Текущая заявка interplanetary flight">
+                    {{ else }}
+                    <span class="system-load-icon system-load-icon--disabled" role="img" aria-label="Заявка пуста" title="Заявка пуста">
+                    {{ end }}
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
                             <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
                         </svg>
                         <span class="system-load-icon__badge">{{ .draftSize }}</span>
-                    </a>
-                    {{ end }}
+                    {{ if .basketActive }}</a>{{ else }}</span>{{ end }}
                 </div>
             </div>
         </div>

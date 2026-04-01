@@ -31,24 +31,21 @@ func (h *Handler) GetRoutes(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
-	var (
-		hasDraft bool
-		draftMP  repository.MissionProfile
-	)
+	var draftMP repository.MissionProfile
 	if fr, err := h.Repository.GetDraft(CurrentUserID()); err == nil {
-		hasDraft = true
 		draftMP = repository.ToMissionProfile(fr)
 	} else if err != nil && err != gorm.ErrRecordNotFound {
 		logrus.Error(err)
 	}
 
+	basketActive := draftMP.ID != 0 && draftMP.RouteCount > 0
+
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"routes":    routes,
-		"query":     searchQuery,
-		"hasDraft":  hasDraft,
-		"draft":     draftMP,
-		"draftID":   draftMP.ID,
-		"draftSize": draftMP.RouteCount,
+		"routes":       routes,
+		"query":        searchQuery,
+		"draftID":      draftMP.ID,
+		"draftSize":    draftMP.RouteCount,
+		"basketActive": basketActive,
 	})
 }
 
@@ -66,12 +63,16 @@ func (h *Handler) GetRoute(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
+	searchQuery := ctx.Query("query")
+
 	var (
 		hasMissionData bool
 		missionRoute   *repository.MissionRoute
+		draftMP        repository.MissionProfile
 	)
 	if fr, err := h.Repository.GetDraft(CurrentUserID()); err == nil {
-		mp := repository.ToMissionProfile(fr)
+		draftMP = repository.ToMissionProfile(fr)
+		mp := draftMP
 		for i := range mp.Routes {
 			if mp.Routes[i].Route.ID == route.ID {
 				hasMissionData = true
@@ -83,10 +84,16 @@ func (h *Handler) GetRoute(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
+	basketActive := draftMP.ID != 0 && draftMP.RouteCount > 0
+
 	ctx.HTML(http.StatusOK, "strategy.html", gin.H{
 		"route":          route,
 		"missionRoute":   missionRoute,
 		"hasMissionData": hasMissionData,
+		"query":          searchQuery,
+		"draftID":        draftMP.ID,
+		"draftSize":      draftMP.RouteCount,
+		"basketActive":   basketActive,
 	})
 }
 
@@ -111,8 +118,20 @@ func (h *Handler) GetMission(ctx *gin.Context) {
 	mission := repository.ToMissionProfile(fr)
 	mission.CanDelete = fr.Status == "draft"
 
+	var draftMP repository.MissionProfile
+	if dfr, err := h.Repository.GetDraft(CurrentUserID()); err == nil {
+		draftMP = repository.ToMissionProfile(dfr)
+	} else if err != nil && err != gorm.ErrRecordNotFound {
+		logrus.Error(err)
+	}
+	basketActive := draftMP.ID != 0 && draftMP.RouteCount > 0
+
 	ctx.HTML(http.StatusOK, "system_load.html", gin.H{
-		"mission": mission,
+		"mission":      mission,
+		"query":        "",
+		"draftID":      draftMP.ID,
+		"draftSize":    draftMP.RouteCount,
+		"basketActive": basketActive,
 	})
 }
 

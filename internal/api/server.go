@@ -41,33 +41,8 @@ func StartServer() {
 	r.POST("/missions/:id/segments/:routeId/recalc", h.PostRecalcSegment)
 	r.POST("/missions/:id/segments/:routeId/delete", h.PostDeleteSegment)
 
-	// REST API для SPA (лаб. 3) — пути в тематике interplanetary flight
-	apiGroup := r.Group("/api")
-	{
-		// Домен межпланетного перелёта (услуга)
-		apiGroup.GET("/interplanetaryflights", h.APIListInterplanetaryFlights)
-		apiGroup.GET("/interplanetaryflights/:id", h.APIGetInterplanetaryFlight)
-		apiGroup.POST("/interplanetaryflights", h.APICreateInterplanetaryFlight)
-
-		// Домен м-м (перелёт в заявке)
-		apiGroup.POST("/interplanetaryflightrequests/draft/items", h.APIAddInterplanetaryFlightToDraftRequest)
-		apiGroup.PUT("/interplanetaryflightrequests/:id/items/:routeId", h.APIUpdateInterplanetaryFlightInRequest)
-		apiGroup.DELETE("/interplanetaryflightrequests/:id/items/:routeId", h.APIDeleteInterplanetaryFlightInRequest)
-
-		// Домен заявки на межпланетный перелёт (interplanetary flight request)
-		apiGroup.GET("/interplanetaryflightrequests/cart-icon", h.APIGetInterplanetaryFlightRequestCartIcon)
-		apiGroup.GET("/interplanetaryflightrequests", h.APIListInterplanetaryFlightRequests)
-		apiGroup.GET("/interplanetaryflightrequests/:id", h.APIGetInterplanetaryFlightRequest)
-		apiGroup.PUT("/interplanetaryflightrequests/:id", h.APIUpdateInterplanetaryFlightRequest)
-		apiGroup.PUT("/interplanetaryflightrequests/:id/form", h.APIFormInterplanetaryFlightRequest)
-		apiGroup.PUT("/interplanetaryflightrequests/:id/moderate", h.APIModerateInterplanetaryFlightRequest)
-		apiGroup.DELETE("/interplanetaryflightrequests/:id", h.APIDeleteInterplanetaryFlightRequest)
-
-		// Домен пользователя сервиса межпланетных перелётов
-		apiGroup.POST("/interplanetaryflightusers/register", h.APIRegisterInterplanetaryFlightsUser)
-		apiGroup.POST("/interplanetaryflightusers/login", h.APILoginInterplanetaryFlightsUser)
-		apiGroup.POST("/interplanetaryflightusers/logout", h.APILogoutInterplanetaryFlightsUser)
-	}
+	// REST API (лаб. 4): JWT, Redis blacklist, права гость/пользователь/модератор, Swagger.
+	h.RegisterAPIRoutes(r)
 
 	r.Run()
 	log.Println("Server down")

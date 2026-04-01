@@ -1,26 +1,124 @@
 package repository
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-// Repository — слой доступа к данным (PostgreSQL + ORM).
+var (
+	ErrNotFound           = errors.New("not found")
+	ErrAlreadyExists      = errors.New("already exists")
+	ErrNotAllowed         = errors.New("not allowed")
+	ErrInvalidCredentials = errors.New("invalid username or password")
+)
+
+// Repository — слой доступа к данным (PostgreSQL + ORM) и Redis (JWT blacklist).
 type Repository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	rdb *redis.Client
 }
 
 func NewRepository(db *gorm.DB) (*Repository, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is nil")
 	}
-	return &Repository{db: db}, nil
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "localhost"
+	}
+	redisPort := os.Getenv("REDIS_PORT")
+	if redisPort == "" {
+		redisPort = "6379"
+	}
+	rdb := redis.NewClient(&redis.Options{
+		Addr: redisHost + ":" + redisPort,
+	})
+	if err := rdb.Ping(context.Background()).Err(); err != nil {
+		return nil, fmt.Errorf("redis: %w", err)
+	}
+	return &Repository{db: db, rdb: rdb}, nil
+}
+
+func blacklistKeyForToken(tokenString string) string {
+	h := sha256.Sum256([]byte(tokenString))
+	return "blacklist:" + hex.EncodeToString(h[:])
+}
+
+// AddTokenToBlacklist сохраняет JTI-хеш токена в Redis до истечения срока действия JWT.
+func (r *Repository) AddTokenToBlacklist(ctx context.Context, tokenString string, ttl time.Duration, userID string) error {
+	if ttl <= 0 {
+		return nil
+	}
+	key := blacklistKeyForToken(tokenString)
+	value := "user_id:" + userID
+	return r.rdb.Set(ctx, key, value, ttl).Err()
+}
+
+// IsTokenBlacklisted проверяет наличие токена в blacklist.
+func (r *Repository) IsTokenBlacklisted(ctx context.Context, tokenString string) (bool, error) {
+	key := blacklistKeyForToken(tokenString)
+	n, err := r.rdb.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return n > 0, nil
+}
+
+// GenerateToken выдаёт JWT с идентификатором пользователя и флагом модератора.
+func GenerateToken(userID int64, isModerator bool) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":      fmt.Sprintf("%d", userID),
+		"is_moderator": isModerator,
+		"exp":          time.Now().Add(time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwtKey := os.Getenv("JWT_KEY")
+	if jwtKey == "" {
+		jwtKey = "default-secret-key-change-in-production"
+	}
+	return token.SignedString([]byte(jwtKey))
+}
+
+// GetUserByUsername возвращает пользователя по логину или ErrNotFound.
+func (r *Repository) GetUserByUsername(username string) (*User, error) {
+	var u User
+	if err := r.db.Where("username = ?", username).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("%w: user %q", ErrNotFound, username)
+		}
+		return nil, err
+	}
+	return &u, nil
+}
+
+// SignIn проверяет учётные данные и возвращает JWT (как в учебном примере, пароль сравнивается с полем password_hash).
+func (r *Repository) SignIn(username, password string) (string, error) {
+	if username == "" || password == "" {
+		return "", ErrInvalidCredentials
+	}
+	u, err := r.GetUserByUsername(username)
+	if err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return "", ErrInvalidCredentials
+		}
+		return "", err
+	}
+	if u.PasswordHash != password {
+		return "", ErrInvalidCredentials
+	}
+	return GenerateToken(u.ID, u.IsModerator)
 }
 
 const (
@@ -348,8 +446,8 @@ type RequestListItem struct {
 	SegmentsWithResult int64      `json:"segments_with_result"`
 }
 
-// ListRequests возвращает список заявок с фильтрацией по статусу и диапазону даты формирования.
-func (r *Repository) ListRequests(status string, formedFrom, formedTo *time.Time) ([]RequestListItem, error) {
+// ListRequests возвращает список заявок: модератор видит все, создатель — только свои (без черновиков и удалённых).
+func (r *Repository) ListRequests(viewerUserID int, isModerator bool, status string, formedFrom, formedTo *time.Time) ([]RequestListItem, error) {
 	var items []RequestListItem
 
 	tx := r.db.Table("flight_requests fr").
@@ -371,6 +469,10 @@ func (r *Repository) ListRequests(status string, formedFrom, formedTo *time.Time
 		Joins("LEFT JOIN users um ON um.id = fr.moderated_by").
 		Where("fr.status NOT IN ('deleted', 'draft')")
 
+	if !isModerator {
+		tx = tx.Where("fr.created_by = ?", viewerUserID)
+	}
+
 	if status != "" {
 		tx = tx.Where("fr.status = ?", status)
 	}
@@ -387,12 +489,14 @@ func (r *Repository) ListRequests(status string, formedFrom, formedTo *time.Time
 	return items, nil
 }
 
-// GetRequestWithItems возвращает одну заявку с услугами для API.
-func (r *Repository) GetRequestWithItems(userID, id int) (*FlightRequest, error) {
+// GetRequestWithItems возвращает одну заявку с услугами: создатель — только свою, модератор — любую не удалённую.
+func (r *Repository) GetRequestWithItems(viewerUserID, id int, isModerator bool) (*FlightRequest, error) {
 	var fr FlightRequest
-	err := r.db.Preload("Items.Route").
-		Where("id = ? AND created_by = ? AND status <> 'deleted'", id, userID).
-		First(&fr).Error
+	q := r.db.Preload("Items.Route").Where("id = ? AND status <> 'deleted'", id)
+	if !isModerator {
+		q = q.Where("created_by = ?", viewerUserID)
+	}
+	err := q.First(&fr).Error
 	if err != nil {
 		return nil, err
 	}
@@ -519,8 +623,18 @@ func (r *Repository) SoftDeleteRequest(userID, id int) error {
 	).Error
 }
 
-// CreateUser регистрирует нового пользователя.
+// CreateUser регистрирует нового пользователя (пароль сохраняется в password_hash как в seed-демо).
 func (r *Repository) CreateUser(username, passwordHash string, isModerator bool) (*User, error) {
+	if username == "" {
+		return nil, fmt.Errorf("username required")
+	}
+	_, err := r.GetUserByUsername(username)
+	if err == nil {
+		return nil, fmt.Errorf("%w: username %s", ErrAlreadyExists, username)
+	}
+	if !errors.Is(err, ErrNotFound) {
+		return nil, err
+	}
 	u := &User{
 		Username:     username,
 		PasswordHash: passwordHash,

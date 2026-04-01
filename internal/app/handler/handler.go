@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -20,6 +21,27 @@ func NewHandler(r *repository.Repository) *Handler {
 	return &Handler{
 		Repository: r,
 	}
+}
+
+func (h *Handler) apiError(ctx *gin.Context, code int, err error) {
+	logrus.Error(err.Error())
+	var msg string
+	switch {
+	case errors.Is(err, repository.ErrNotFound):
+		msg = "Не найдено"
+	case errors.Is(err, repository.ErrAlreadyExists):
+		msg = "Уже существует"
+	case errors.Is(err, repository.ErrNotAllowed):
+		msg = "Доступ запрещён"
+	case errors.Is(err, repository.ErrInvalidCredentials):
+		msg = "Неверный логин или пароль"
+	default:
+		msg = err.Error()
+	}
+	ctx.JSON(code, gin.H{
+		"status":      "error",
+		"description": msg,
+	})
 }
 
 // GetRoutes — главная страница: каталог межпланетных маршрутов + иконка заявки (миссии).

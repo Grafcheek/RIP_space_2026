@@ -15,7 +15,13 @@ import (
 )
 
 // APIListInterplanetaryFlights возвращает список межпланетных перелётов с фильтрацией.
-// GET /api/interplanetaryflights?query=...
+// @Summary Список межпланетных перелётов (услуг)
+// @Tags interplanetaryflights
+// @Produce json
+// @Param query query string false "Поиск по названию / телам"
+// @Success 200 {object} map[string]interface{} "items"
+// @Failure 500 {object} map[string]string
+// @Router /interplanetaryflights [get]
 func (h *Handler) APIListInterplanetaryFlights(ctx *gin.Context) {
 	searchQuery := ctx.Query("query")
 
@@ -32,7 +38,15 @@ func (h *Handler) APIListInterplanetaryFlights(ctx *gin.Context) {
 }
 
 // APIGetInterplanetaryFlight возвращает один межпланетный перелёт по ID.
-// GET /api/services/:id
+// @Summary Одна услуга (межпланетный перелёт)
+// @Tags interplanetaryflights
+// @Produce json
+// @Param id path int true "ID перелёта"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /interplanetaryflights/{id} [get]
 func (h *Handler) APIGetInterplanetaryFlight(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -50,7 +64,8 @@ func (h *Handler) APIGetInterplanetaryFlight(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, route)
 }
 
-type createServiceRequest struct {
+// CreateInterplanetaryFlightForm поля multipart при создании услуги (swagger).
+type CreateInterplanetaryFlightForm struct {
 	Title       string  `form:"title" binding:"required"`
 	From        string  `form:"from_body" binding:"required"`
 	To          string  `form:"to_body" binding:"required"`
@@ -60,9 +75,26 @@ type createServiceRequest struct {
 }
 
 // APICreateInterplanetaryFlight добавляет новый межпланетный перелёт и медиа в MinIO-совместимое хранилище.
-// POST /api/interplanetaryflights (multipart/form-data)
+// @Summary Создать межпланетный перелёт (multipart)
+// @Tags interplanetaryflights
+// @Accept multipart/form-data
+// @Produce json
+// @Param title formData string true "Название"
+// @Param from_body formData string true "Тело отправления"
+// @Param to_body formData string true "Тело назначения"
+// @Param description formData string true "Описание"
+// @Param from_orbit_radius_km formData number true "Радиус орбиты отправления, км"
+// @Param to_orbit_radius_km formData number true "Радиус орбиты назначения, км"
+// @Param image formData file false "Изображение"
+// @Param video formData file false "Видео"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security ApiKeyAuth
+// @Router /interplanetaryflights [post]
 func (h *Handler) APICreateInterplanetaryFlight(ctx *gin.Context) {
-	var req createServiceRequest
+	var req CreateInterplanetaryFlightForm
 	if err := ctx.Bind(&req); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return

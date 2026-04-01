@@ -3,7 +3,7 @@
         <title>{{ .mission.Title }}</title>
         <link rel="stylesheet" href="/static/css/styles.css">
     </head>
-    <body>
+    <body class="mission-basket-page">
         <header class="site-header site-header-main">
             <div class="header-spacer"></div>
             <a href="/" class="header-home header-logo-center">
@@ -19,84 +19,74 @@
                         name="query"
                         class="search-input"
                         placeholder="Поиск маршрутов и планет"
-                        value="{{ .query }}">
+                        value="">
                 </form>
                 <div class="toolbar-basket">
-                    {{ if .basketActive }}
-                    <a href="/missions/{{ .draftID }}" class="system-load-icon" aria-label="Текущая заявка interplanetary flight">
-                    {{ else }}
-                    <span class="system-load-icon system-load-icon--disabled" role="img" aria-label="Заявка пуста" title="Заявка пуста">
-                    {{ end }}
+                    <a href="/missions/{{ .mission.ID }}" class="system-load-icon" aria-label="Текущая заявка">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
                             <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
                         </svg>
-                        <span class="system-load-icon__badge">{{ .draftSize }}</span>
-                    {{ if .basketActive }}</a>{{ else }}</span>{{ end }}
+                        <span class="system-load-icon__badge">{{ len .mission.Routes }}</span>
+                    </a>
                 </div>
             </div>
         </div>
         <div class="system-load-detail">
             <div class="system-load-detail__header-card">
-                <h1 class="system-load-detail__title">{{ .mission.Title }}</h1>
-                <p class="system-load-detail__description">{{ .mission.Description }}</p>
-                <div class="system-load-detail__params">
-                    <div class="system-load-detail__param">
-                        Сухая масса аппарата: <span>{{ printf "%.0f" .mission.DryMassKg }} кг</span>
+                <div class="system-load-detail__header-top">
+                    <div class="system-load-detail__header-main">
+                        <h1 class="system-load-detail__title">{{ .mission.Title }}</h1>
+                        <p class="system-load-detail__description">{{ .mission.Description }}</p>
                     </div>
-                    <div class="system-load-detail__param">
-                        Удельный импульс двигателя: <span>{{ printf "%.0f" .mission.IspSeconds }} с</span>
-                    </div>
-                </div>
                 {{ if .mission.CanDelete }}
-                <form action="/basket/delete/{{ .mission.ID }}" method="POST" class="system-load-detail__delete">
-                    <button type="submit" class="system-load-detail__delete-btn">Удалить заявку</button>
+                <form action="/basket/delete/{{ .mission.ID }}" method="POST" class="system-load-detail__delete-form">
+                    <button type="submit" class="system-load-detail__delete-icon" title="Удалить заявку" aria-label="Удалить заявку">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M9 3h6l1 2h5v2H3V5h5l1-2zm-1 6h2v10H8V9zm4 0h2v10h-2V9zm4 0h2v10h-2V9z" fill="currentColor"/>
+                        </svg>
+                    </button>
                 </form>
                 {{ end }}
+                </div>
             </div>
-            <table class="load-table">
-                <thead>
-                    <tr>
-                        <th class="load-table__col-photo">Изображение</th>
-                        <th>Маршрут</th>
-                        <th>Откуда</th>
-                        <th>Куда</th>
-                        <th>Δv (м/с)</th>
-                        <th>Топливо (кг)</th>
-                        <th>Энергия (Дж)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{ range .mission.Routes }}
-                    <tr>
-                        <td class="load-table__col-photo">
+            <div class="basket-segments">
+                <div class="basket-segments__head" aria-hidden="true">
+                    <div class="basket-segments__cell basket-segments__cell--thumb">Фото</div>
+                    <div class="basket-segments__cell">Маршрут</div>
+                    <div class="basket-segments__cell">Откуда</div>
+                    <div class="basket-segments__cell">Куда</div>
+                    <div class="basket-segments__cell basket-segments__cell--num">Δv (м/с)</div>
+                    <div class="basket-segments__cell basket-segments__cell--num basket-segments__cell--fuel">Топливо (кг)</div>
+                </div>
+
+                {{ range .mission.Routes }}
+                <article class="basket-segment">
+                    <div class="basket-segment__row">
+                        <div class="basket-segments__cell basket-segments__cell--thumb">
                             <img src="http://localhost:9000/spaceobjects/{{ .Route.Image }}" alt="{{ .Route.Title }}">
-                        </td>
-                        <td>{{ .Route.Title }}</td>
-                        <td>{{ .Route.From }}</td>
-                        <td>{{ .Route.To }}</td>
-                        <td class="load-table__col-result">{{ printf "%.0f" .DeltaVms }}</td>
-                        <td>{{ printf "%.0f" .PropellantKg }}</td>
-                        <td>{{ printf "%.2e" .EnergyJ }}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="7">
-                            <form action="/missions/{{ $.mission.ID }}/segments/{{ .Route.ID }}/recalc" method="POST" class="segment-form">
-                                <label>Масса аппарата, кг:
-                                    <input type="number" name="dry_mass_kg" value="{{ printf "%.0f" .SegmentDryMassKg }}" step="1">
-                                </label>
-                                <label>Isp, с:
-                                    <input type="number" name="isp_sec" value="{{ printf "%.0f" .SegmentIspSec }}" step="1">
-                                </label>
-                                <button type="submit" class="detail-content__primary-btn">Рассчитать</button>
-                            </form>
-                            <form action="/missions/{{ $.mission.ID }}/segments/{{ .Route.ID }}/delete" method="POST" class="system-load-detail__delete">
-                                <button type="submit" class="system-load-detail__delete-btn">Удалить маршрут</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {{ end }}
-                </tbody>
-            </table>
+                        </div>
+                        <div class="basket-segments__cell basket-segments__cell--strong">{{ .Route.Title }}</div>
+                        <div class="basket-segments__cell">{{ .Route.From }}</div>
+                        <div class="basket-segments__cell">{{ .Route.To }}</div>
+                        <div class="basket-segments__cell basket-segments__cell--num basket-segments__cell--highlight">{{ printf "%.0f" .DeltaVms }}</div>
+                        <div class="basket-segments__cell basket-segments__cell--num basket-segments__cell--fuel basket-segments__cell--highlight">{{ printf "%.0f" .PropellantKg }}</div>
+                    </div>
+                    <div class="basket-segment__panel">
+                        <form action="/missions/{{ $.mission.ID }}/segments/{{ .Route.ID }}/recalc" method="POST" class="basket-segment__form">
+                            <label class="basket-segment__field">
+                                <span class="basket-segment__field-name">Масса, кг</span>
+                                <input type="number" name="dry_mass_kg" value="{{ printf "%.0f" .SegmentDryMassKg }}" step="1" class="basket-segment__input">
+                            </label>
+                            <label class="basket-segment__field">
+                                <span class="basket-segment__field-name">Isp, с</span>
+                                <input type="number" name="isp_sec" value="{{ printf "%.0f" .SegmentIspSec }}" step="1" class="basket-segment__input">
+                            </label>
+                            <button type="submit" class="basket-segment__submit">Рассчитать</button>
+                        </form>
+                    </div>
+                </article>
+                {{ end }}
+            </div>
         </div>
     </body>
 </html>

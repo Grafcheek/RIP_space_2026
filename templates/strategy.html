@@ -4,40 +4,14 @@
         <link rel="stylesheet" href="/static/css/styles.css">
     </head>
     <body class="detail-page">
-        <header class="site-header site-header-main">
-            <div class="header-spacer"></div>
-            <a href="/" class="header-home header-logo-center">
+        <header class="site-header site-header--center-logo">
+            <a href="/" class="header-home">
                 <img src="/static/img/logo.png" alt="Voyager mission" class="header-home__icon">
             </a>
-            <div class="header-spacer"></div>
         </header>
-        <div class="toolbar">
-            <div class="toolbar-inner">
-                <form action="/" method="GET" class="search-form">
-                    <input
-                        type="text"
-                        name="query"
-                        class="search-input"
-                        placeholder="Поиск маршрутов и планет"
-                        value="{{ .query }}">
-                </form>
-                <div class="toolbar-basket">
-                    {{ if .basketActive }}
-                    <a href="/missions/{{ .draftID }}" class="system-load-icon" aria-label="Текущая заявка interplanetary flight">
-                    {{ else }}
-                    <span class="system-load-icon system-load-icon--disabled" role="img" aria-label="Заявка пуста" title="Заявка пуста">
-                    {{ end }}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 7h16v2H4V7zm2 4h12v2H6v-2zm3 4h6v2H9v-2z" fill="currentColor"/>
-                        </svg>
-                        <span class="system-load-icon__badge">{{ .draftSize }}</span>
-                    {{ if .basketActive }}</a>{{ else }}</span>{{ end }}
-                </div>
-            </div>
-        </div>
-        <main>
-            <section class="detail-video-wrapper">
-                <div class="detail-video-frame">
+        <main class="detail-shorts">
+            <div class="detail-shorts__video-col">
+                <div class="detail-video-frame detail-video-frame--shorts">
                     <video
                         class="detail-video"
                         autoplay
@@ -47,35 +21,35 @@
                     >
                         <source src="http://localhost:9000/spaceobjects/{{ .route.Video }}" type="video/mp4">
                     </video>
-                    <div class="detail-video__caption">
-                        <h1 class="detail-video__title">{{ .route.Title }}</h1>
-                        <p class="detail-video__subtitle">{{ .route.Description }}</p>
+                    <div class="detail-video__caption detail-video__caption--minimal">
+                        <p class="detail-video__route">{{ .route.From }} — {{ .route.To }}</p>
                     </div>
                 </div>
-            </section>
-            <section class="detail-content">
+            </div>
+            <section class="detail-shorts__side">
+                <h1 class="detail-shorts__title">{{ .route.Title }}</h1>
+                <p class="detail-shorts__description">{{ .route.Description }}</p>
+
                 {{ if .hasMissionData }}
-                <h2 class="detail-content__heading">Параметры расчёта миссии</h2>
-                <div class="detail-content__grid">
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Характеристическая скорость Δv</div>
-                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.DeltaVms }} м/с</div>
+                <div class="detail-shorts__metrics">
+                    <h2 class="detail-shorts__metrics-heading">Расчёт (interplanetary_flights_in_request)</h2>
+                    <div class="detail-shorts__metric">
+                        <div class="detail-shorts__metric-label">Характеристическая скорость Δv</div>
+                        <div class="detail-shorts__metric-value">{{ printf "%.0f" .missionRoute.DeltaVms }} м/с</div>
                     </div>
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Требуемое топливо</div>
-                        <div class="detail-content__value">{{ printf "%.0f" .missionRoute.PropellantKg }} кг</div>
+                    <div class="detail-shorts__metric">
+                        <div class="detail-shorts__metric-label">Требуемое топливо</div>
+                        <div class="detail-shorts__metric-value">{{ printf "%.0f" .missionRoute.PropellantKg }} кг</div>
                     </div>
-                    <div class="detail-content__metric">
-                        <div class="detail-content__label">Оценка энергии</div>
-                        <div class="detail-content__value">{{ printf "%.2e" .missionRoute.EnergyJ }} Дж</div>
+                    <div class="detail-shorts__metric">
+                        <div class="detail-shorts__metric-label">Оценка энергии</div>
+                        <div class="detail-shorts__metric-value">{{ printf "%.2e" .missionRoute.EnergyJ }} Дж</div>
                     </div>
                 </div>
                 {{ end }}
-                <p class="detail-content__description">
-                    Выберите параметры маршрута и добавьте его в текущую заявку для последующего расчёта на странице «Расчёты».
-                </p>
-                <form action="/basket/add/{{ .route.ID }}" method="POST" class="detail-content__actions">
-                    <button type="submit" class="detail-content__primary-btn">Добавить в заявку</button>
+
+                <form action="/basket/add/{{ .route.ID }}" method="POST" class="detail-shorts__actions">
+                    <button type="submit" class="detail-shorts__primary-btn">Добавить в заявку</button>
                 </form>
             </section>
         </main>

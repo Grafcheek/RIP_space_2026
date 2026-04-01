@@ -9,9 +9,8 @@ import (
 // Публичный базовый URL объектов в MinIO (как в HTML-шаблонах: /spaceobjects/...).
 const minioSpaceObjectsPublicBase = "http://localhost:9000/spaceobjects/"
 
-// interplanetaryFlightRequestDetail — ответ GET /api/interplanetaryflightrequests/:id и успешного PUT .../form:
-// без вложенного объекта «услуга»: все поля сегмента и перелёта в одном элементе items[].
-type interplanetaryFlightRequestDetail struct {
+// InterplanetaryFlightRequestDetail ответ GET /api/interplanetaryflightrequests/:id и успешного PUT .../form.
+type InterplanetaryFlightRequestDetail struct {
 	ID                  int                                      `json:"id"`
 	Status              string                                   `json:"status"`
 	CreatedAt           string                                   `json:"created_at"`
@@ -20,10 +19,11 @@ type interplanetaryFlightRequestDetail struct {
 	SpacecraftDryMassKg float64                                  `json:"spacecraft_dry_mass_kg"`
 	EngineIspSec        float64                                  `json:"engine_isp_sec"`
 	TotalFuelMassKg     *float64                                 `json:"total_fuel_mass_kg,omitempty"`
-	Items               []interplanetaryFlightRequestLineFlatDTO `json:"items"`
+	Items               []InterplanetaryFlightRequestLineFlatDTO `json:"items"`
 }
 
-type interplanetaryFlightRequestLineFlatDTO struct {
+// InterplanetaryFlightRequestLineFlatDTO одна строка м-м с полями услуги и расчётами.
+type InterplanetaryFlightRequestLineFlatDTO struct {
 	RouteID      int `json:"route_id"`
 	Quantity     int `json:"quantity"`
 	SegmentOrder int `json:"segment_order"`
@@ -63,8 +63,8 @@ func spaceObjectURL(key string) string {
 	return strings.TrimRight(minioSpaceObjectsPublicBase, "/") + "/" + key
 }
 
-func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interplanetaryFlightRequestDetail {
-	out := interplanetaryFlightRequestDetail{
+func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) InterplanetaryFlightRequestDetail {
+	out := InterplanetaryFlightRequestDetail{
 		ID:                  fr.ID,
 		Status:              fr.Status,
 		CreatedAt:           fr.CreatedAt.UTC().Format("2006-01-02T15:04:05Z07:00"),
@@ -82,7 +82,7 @@ func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interp
 		out.CompletedAt = &s
 	}
 
-	out.Items = make([]interplanetaryFlightRequestLineFlatDTO, 0, len(fr.Items))
+	out.Items = make([]InterplanetaryFlightRequestLineFlatDTO, 0, len(fr.Items))
 
 	for _, it := range fr.Items {
 		route := it.Route
@@ -98,7 +98,7 @@ func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interp
 		fuel := repository.CalculatePropellantKg(mass, dv, isp)
 		energy := repository.CalculateEnergyJ(mass, fuel, dv)
 
-		line := interplanetaryFlightRequestLineFlatDTO{
+		line := InterplanetaryFlightRequestLineFlatDTO{
 			RouteID:                         it.RouteID,
 			Quantity:                        it.Quantity,
 			SegmentOrder:                    it.SegmentOrder,

@@ -353,25 +353,44 @@ a.card img {
 
 .detail-page {
     background-color: #000000;
+    min-height: 100vh;
 }
 
-.detail-video-wrapper {
-    /* шапка каталога + тулбар (как на главной) */
-    min-height: calc(100vh - 99px - 65px);
+/* shorts-layout (как в lab1-cosmos-design) */
+
+.detail-shorts {
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: center;
-    padding: 32px 16px;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    min-height: calc(100vh - 99px);
+    padding: 24px 20px 40px;
+    box-sizing: border-box;
+}
+
+.detail-shorts__video-col {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .detail-video-frame {
     position: relative;
-    width: min(420px, 100%);
-    aspect-ratio: 9 / 16;
     background-color: #000000;
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 20px;
     border: 1px solid #2e2e32;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.detail-video-frame--shorts {
+    width: min(480px, 63vw);
+    aspect-ratio: 9 / 16;
+    max-height: min(720px, calc(100vh - 140px));
 }
 
 .detail-video {
@@ -389,77 +408,124 @@ a.card img {
     right: 0;
     bottom: 0;
     padding: 16px 16px 20px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.88), transparent 70%);
 }
 
-.detail-video__title {
+.detail-video__caption--minimal {
+    padding: 14px 14px 18px;
+}
+
+.detail-video__route {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 20px;
+    font-size: 17px;
     font-weight: 800;
     color: #ffffff;
-    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+    margin: 0;
+    line-height: 1.2;
 }
 
-.detail-video__subtitle {
+.detail-shorts__side {
+    flex: 1;
+    min-width: 0;
+    max-width: 520px;
+    padding: 8px 0 0;
+    color: #ffffff;
+}
+
+.detail-shorts__title {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 10px 0;
+    line-height: 1.15;
+}
+
+.detail-shorts__description {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.88);
+    line-height: 1.65;
+    margin: 0 0 28px 0;
+}
+
+.detail-shorts__metrics {
+    padding-top: 8px;
+    border-top: 1px solid #2e2e32;
+}
+
+.detail-shorts__metrics-heading {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 16px 0;
+}
+
+.detail-shorts__metric {
+    margin-bottom: 18px;
+}
+
+.detail-shorts__metric:last-child {
+    margin-bottom: 0;
+}
+
+.detail-shorts__metric-label {
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13px;
     font-weight: 400;
+    color: var(--color-muted);
+    margin-bottom: 6px;
+}
+
+.detail-shorts__metric-value {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
     color: #ffffff;
 }
 
-.detail-content {
-    background-color: #ffffff;
-    padding: 32px 24px 48px;
-    max-width: 960px;
-    margin: 0 auto;
+.detail-shorts__actions {
+    margin-top: 22px;
 }
 
-.detail-content__heading {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 24px;
-}
-
-.detail-content__grid {
-    display: flex;
-    gap: 24px;
-    flex-wrap: wrap;
-}
-
-.detail-content__metric {
-    min-width: 220px;
-}
-
-.detail-content__label {
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--color-muted);
-    margin-bottom: 4px;
-}
-
-.detail-content__value {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 18px;
-    font-weight: 600;
-    color: #000000;
-}
-
-.detail-content__actions {
-    margin-top: 32px;
-}
-
-.detail-content__primary-btn {
-    border: 1px solid #000000;
-    background: #000000;
+.detail-shorts__primary-btn {
+    width: 100%;
+    border: 1px solid #ffffff;
+    background: transparent;
     color: #ffffff;
     padding: 12px 16px;
     font-family: "Public Sans Web", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.detail-shorts__primary-btn:hover {
+    background: #ffffff;
+    color: #000000;
+}
+
+@media (max-width: 880px) {
+    .detail-shorts {
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+    }
+
+    .detail-video-frame--shorts {
+        width: min(480px, 88vw);
+        max-height: min(640px, 58vh);
+    }
+
+    .detail-shorts__side {
+        max-width: 100%;
+        width: 100%;
+        padding-top: 0;
+    }
 }
 
 .system-load-detail__delete {
@@ -512,6 +578,11 @@ a.card img {
 
 /* ===== Страница заявки (system_load) ===== */
 
+.mission-basket-page {
+    background-color: #000000;
+    color: #ffffff;
+}
+
 .system-load-detail {
     max-width: 1200px;
     margin: 30px auto;
@@ -523,6 +594,20 @@ a.card img {
     border-radius: 0;
     padding: 32px 32px;
     margin-bottom: 32px;
+    border: 1px solid var(--color-border);
+}
+
+.system-load-detail__header-top {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.system-load-detail__header-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .system-load-detail__title {
@@ -539,24 +624,7 @@ a.card img {
     font-weight: 400;
     color: var(--color-muted);
     line-height: 1.6;
-    margin: 0 0 16px 0;
-}
-
-.system-load-detail__params {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 8px;
-}
-
-.system-load-detail__param {
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 14.08px;
-    color: var(--color-muted);
-}
-
-.system-load-detail__param span {
-    color: #ffffff;
+    margin: 0;
 }
 
 /* ===== Таблица стратегий в заявке ===== */
@@ -636,6 +704,187 @@ a.card img {
     font-weight: 600;
 }
 
+/* ===== Удаление заявки (иконка) ===== */
+
+.system-load-detail__delete-form {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.system-load-detail__delete-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 1px solid rgba(175, 17, 8, 0.55);
+    background: rgba(175, 17, 8, 0.12);
+    color: #e8e8e8;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.system-load-detail__delete-icon:hover {
+    border-color: var(--color-error);
+    color: #ffffff;
+    background: rgba(175, 17, 8, 0.35);
+    transform: scale(1.04);
+}
+
+/* ===== Сегменты заявки (карточки, как в lab2) ===== */
+
+.basket-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.basket-segments__head,
+.basket-segment__row {
+    display: grid;
+    grid-template-columns: 88px minmax(120px, 1.1fr) minmax(90px, 1fr) minmax(90px, 1fr) minmax(6.5rem, 0.85fr) minmax(7.5rem, 0.85fr);
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--color-border);
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.basket-segments__head {
+    background-color: #000000;
+}
+
+.basket-segments__cell {
+    padding: 12px 14px;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14.08px;
+    color: var(--color-muted);
+    text-align: left;
+}
+
+.basket-segments__head .basket-segments__cell {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-muted);
+    padding: 10px 12px;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.basket-segments__head .basket-segments__cell:first-child {
+    border-left: 1px solid var(--color-border);
+}
+
+.basket-segments__head .basket-segments__cell:last-child {
+    border-right: 1px solid var(--color-border);
+}
+
+.basket-segments__cell--thumb {
+    padding: 10px;
+}
+
+.basket-segments__cell--thumb img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    background: #000000;
+    display: block;
+}
+
+.basket-segments__cell--num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.basket-segments__cell--fuel {
+    text-align: right;
+    justify-self: stretch;
+    padding-right: 16px !important;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+.basket-segments__cell--strong {
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.basket-segments__cell--highlight {
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.basket-segment {
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s ease;
+}
+
+.basket-segment:hover .basket-segment__row {
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.basket-segment__panel {
+    border: 1px solid var(--color-border);
+    border-top: none;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 14px 16px;
+}
+
+.basket-segment__form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 20px;
+}
+
+.basket-segment__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.basket-segment__field-name {
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+.basket-segment__input {
+    width: 120px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    background: #000000;
+    color: #ffffff;
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 14px;
+}
+
+.basket-segment__input:focus {
+    outline: none;
+    border-color: #ffffff;
+}
+
+.basket-segment__submit {
+    height: 40px;
+    padding: 0 20px;
+    border: 1px solid #ffffff;
+    background: #ffffff;
+    color: #000000;
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.basket-segment__submit:hover {
+    background: #e8e8e8;
+}
+
 /* ===== Адаптивность ===== */
 
 @media (max-width: 992px) {
@@ -660,5 +909,37 @@ a.card img {
 
     .search-input {
         width: 200px;
+    }
+
+    .system-load-detail__header-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .system-load-detail__delete-form {
+        align-self: flex-end;
+    }
+
+    .basket-segments {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .basket-segments__head,
+    .basket-segment__row {
+        min-width: 640px;
+    }
+
+    .basket-segment__form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .basket-segment__input {
+        width: 100%;
+    }
+
+    .basket-segment__submit {
+        width: 100%;
     }
 }

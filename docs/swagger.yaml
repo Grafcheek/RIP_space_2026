@@ -1,0 +1,785 @@
+basePath: /api
+definitions:
+  handler.AddInterplanetaryFlightToDraftBody:
+    properties:
+      route_id:
+        type: integer
+    required:
+    - route_id
+    type: object
+  handler.InterplanetaryFlightRequestDetail:
+    properties:
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      engine_isp_sec:
+        type: number
+      formed_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/handler.InterplanetaryFlightRequestLineFlatDTO'
+        type: array
+      spacecraft_dry_mass_kg:
+        type: number
+      status:
+        type: string
+      total_fuel_mass_kg:
+        type: number
+    type: object
+  handler.InterplanetaryFlightRequestLineFlatDTO:
+    properties:
+      delta_v_ms:
+        description: Текущий расчёт по формулам лаб. 2 (удобно и для черновика)
+        type: number
+      energy_j:
+        type: number
+      from_orbit_radius_km:
+        type: number
+      image_key:
+        type: string
+      image_url:
+        type: string
+      interplanetary_flight_description:
+        type: string
+      interplanetary_flight_from:
+        type: string
+      interplanetary_flight_title:
+        description: Поля межпланетного перелёта (услуги) в том же объекте
+        type: string
+      interplanetary_flight_to:
+        type: string
+      is_primary:
+        type: boolean
+      payload_mass_kg:
+        type: number
+      propellant_kg:
+        type: number
+      quantity:
+        type: integer
+      route_id:
+        type: integer
+      segment_dry_mass_kg:
+        type: number
+      segment_isp_sec:
+        type: number
+      segment_order:
+        type: integer
+      stored_delta_v_ms:
+        description: Сохранённые при формировании заявки (лаб. 2 / FormRequest)
+        type: number
+      stored_fuel_mass_kg:
+        type: number
+      to_orbit_radius_km:
+        type: number
+      video_key:
+        type: string
+      video_url:
+        type: string
+    type: object
+  handler.LoginUserPayload:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.ModerateInterplanetaryFlightRequestBody:
+    properties:
+      action:
+        description: '"complete" | "reject"'
+        type: string
+    required:
+    - action
+    type: object
+  handler.RegisterUserPayload:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handler.UpdateInterplanetaryFlightMMBody:
+    properties:
+      quantity:
+        type: integer
+      segment_dry_mass_kg:
+        type: number
+      segment_isp_sec:
+        type: number
+      segment_order:
+        type: integer
+    type: object
+  handler.UpdateInterplanetaryFlightRequestBody:
+    properties:
+      engine_isp_sec:
+        type: number
+      spacecraft_dry_mass_kg:
+        type: number
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: 'API заявок на расчёт межпланетного перелёта: характеристическая скорость
+    (Δv), масса топлива, энергия.'
+  title: Interplanetary Flight API
+  version: "1.0"
+paths:
+  /interplanetaryflightrequests:
+    get:
+      parameters:
+      - description: Статус
+        in: query
+        name: status
+        type: string
+      - description: formed_at с (RFC3339)
+        in: query
+        name: from
+        type: string
+      - description: formed_at по (RFC3339)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: items
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Список заявок (создатель — свои; модератор — все)
+      tags:
+      - interplanetaryflightrequests
+  /interplanetaryflightrequests/{id}:
+    delete:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить черновик заявки
+      tags:
+      - interplanetaryflightrequests
+    get:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.InterplanetaryFlightRequestDetail'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Детальная заявка с расчётами Δv / топливо / энергия
+      tags:
+      - interplanetaryflightrequests
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Масса сухого аппарата, Isp
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateInterplanetaryFlightRequestBody'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Редактирование черновика заявки
+      tags:
+      - interplanetaryflightrequests
+  /interplanetaryflightrequests/{id}/form:
+    put:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.InterplanetaryFlightRequestDetail'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Сформировать заявку (draft → formed)
+      tags:
+      - interplanetaryflightrequests
+  /interplanetaryflightrequests/{id}/items/{routeId}:
+    delete:
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID маршрута
+        in: path
+        name: routeId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Удалить перелёт из заявки
+      tags:
+      - interplanetaryflightrequestitems
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID маршрута
+        in: path
+        name: routeId
+        required: true
+        type: integer
+      - description: Поля
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateInterplanetaryFlightMMBody'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Изменить строку м-м (пересчёт Δv/топливо при смене массы/Isp)
+      tags:
+      - interplanetaryflightrequestitems
+  /interplanetaryflightrequests/{id}/moderate:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID заявки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: complete | reject
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ModerateInterplanetaryFlightRequestBody'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Модерация заявки (только модератор)
+      tags:
+      - interplanetaryflightrequests
+  /interplanetaryflightrequests/cart-icon:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: id, count
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Иконка корзины (черновик)
+      tags:
+      - interplanetaryflightrequests
+  /interplanetaryflightrequests/draft/items:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: route_id
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddInterplanetaryFlightToDraftBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Добавить межпланетный перелёт в черновик (created_by из JWT)
+      tags:
+      - interplanetaryflightrequestitems
+  /interplanetaryflights:
+    get:
+      parameters:
+      - description: Поиск по названию / телам
+        in: query
+        name: query
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: items
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Список межпланетных перелётов (услуг)
+      tags:
+      - interplanetaryflights
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Название
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Тело отправления
+        in: formData
+        name: from_body
+        required: true
+        type: string
+      - description: Тело назначения
+        in: formData
+        name: to_body
+        required: true
+        type: string
+      - description: Описание
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Радиус орбиты отправления, км
+        in: formData
+        name: from_orbit_radius_km
+        required: true
+        type: number
+      - description: Радиус орбиты назначения, км
+        in: formData
+        name: to_orbit_radius_km
+        required: true
+        type: number
+      - description: Изображение
+        in: formData
+        name: image
+        type: file
+      - description: Видео
+        in: formData
+        name: video
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Создать межпланетный перелёт (multipart)
+      tags:
+      - interplanetaryflights
+  /interplanetaryflights/{id}:
+    get:
+      parameters:
+      - description: ID перелёта
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Одна услуга (межпланетный перелёт)
+      tags:
+      - interplanetaryflights
+  /interplanetaryflightusers/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Логин и пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginUserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход, получение JWT
+      tags:
+      - interplanetaryflightusers
+  /interplanetaryflightusers/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Токен отозван
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Выход (blacklist токена)
+      tags:
+      - interplanetaryflightusers
+  /interplanetaryflightusers/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Логин и пароль
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterUserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: id, username
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Логин занят
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Регистрация пользователя
+      tags:
+      - interplanetaryflightusers
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -10,7 +10,17 @@ import (
 )
 
 // APIDeleteInterplanetaryFlightInRequest — удаление межпланетного перелёта из строки м-м заявки.
-// DELETE /api/interplanetaryflightrequests/:id/items/:routeId
+// @Summary Удалить перелёт из заявки
+// @Tags interplanetaryflightrequestitems
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Param routeId path int true "ID маршрута"
+// @Success 204 "OK"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security ApiKeyAuth
+// @Router /interplanetaryflightrequests/{id}/items/{routeId} [delete]
 func (h *Handler) APIDeleteInterplanetaryFlightInRequest(ctx *gin.Context) {
 	missionID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -23,7 +33,13 @@ func (h *Handler) APIDeleteInterplanetaryFlightInRequest(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.Repository.RemoveRouteFromDraft(CurrentUserID(), missionID, routeID); err != nil {
+	uid, err := getUserID(ctx)
+	if err != nil {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.Repository.RemoveRouteFromDraft(uid, missionID, routeID); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return
@@ -32,7 +48,8 @@ func (h *Handler) APIDeleteInterplanetaryFlightInRequest(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-type updateMMRequest struct {
+// UpdateInterplanetaryFlightMMBody тело PUT строки м-м (swagger).
+type UpdateInterplanetaryFlightMMBody struct {
 	Quantity     *int     `json:"quantity"`
 	SegmentOrder *int     `json:"segment_order"`
 	MassKg       *float64 `json:"segment_dry_mass_kg"`
@@ -40,7 +57,19 @@ type updateMMRequest struct {
 }
 
 // APIUpdateInterplanetaryFlightInRequest — поля м-м (количество, порядок, параметры сегмента перелёта).
-// PUT /api/requests/:id/items/:routeId
+// @Summary Изменить строку м-м (пересчёт Δv/топливо при смене массы/Isp)
+// @Tags interplanetaryflightrequestitems
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заявки"
+// @Param routeId path int true "ID маршрута"
+// @Param body body UpdateInterplanetaryFlightMMBody true "Поля"
+// @Success 204 "OK"
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security ApiKeyAuth
+// @Router /interplanetaryflightrequests/{id}/items/{routeId} [put]
 func (h *Handler) APIUpdateInterplanetaryFlightInRequest(ctx *gin.Context) {
 	missionID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
@@ -53,13 +82,19 @@ func (h *Handler) APIUpdateInterplanetaryFlightInRequest(ctx *gin.Context) {
 		return
 	}
 
-	var req updateMMRequest
+	var req UpdateInterplanetaryFlightMMBody
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Repository.UpdateSegmentMM(CurrentUserID(), missionID, routeID, req.Quantity, req.SegmentOrder, req.MassKg, req.IspSec); err != nil {
+	uid, err := getUserID(ctx)
+	if err != nil {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.Repository.UpdateSegmentMM(uid, missionID, routeID, req.Quantity, req.SegmentOrder, req.MassKg, req.IspSec); err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)
 		return
@@ -68,20 +103,37 @@ func (h *Handler) APIUpdateInterplanetaryFlightInRequest(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-type addToDraftRequest struct {
+// AddInterplanetaryFlightToDraftBody добавление услуги в черновик (swagger).
+type AddInterplanetaryFlightToDraftBody struct {
 	RouteID int `json:"route_id" binding:"required"`
 }
 
 // APIAddInterplanetaryFlightToDraftRequest — добавление межпланетного перелёта в черновик заявки.
-// POST /api/interplanetaryflightrequests/draft/items
+// @Summary Добавить межпланетный перелёт в черновик (created_by из JWT)
+// @Tags interplanetaryflightrequestitems
+// @Accept json
+// @Produce json
+// @Param body body AddInterplanetaryFlightToDraftBody true "route_id"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Security ApiKeyAuth
+// @Router /interplanetaryflightrequests/draft/items [post]
 func (h *Handler) APIAddInterplanetaryFlightToDraftRequest(ctx *gin.Context) {
-	var req addToDraftRequest
+	var req AddInterplanetaryFlightToDraftBody
 	if err := ctx.BindJSON(&req); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
 
-	fr, err := h.Repository.AddRouteToDraft(CurrentUserID(), req.RouteID)
+	uid, err := getUserID(ctx)
+	if err != nil {
+		ctx.Status(http.StatusUnauthorized)
+		return
+	}
+
+	fr, err := h.Repository.AddRouteToDraft(uid, req.RouteID)
 	if err != nil {
 		logrus.Error(err)
 		ctx.Status(http.StatusInternalServerError)

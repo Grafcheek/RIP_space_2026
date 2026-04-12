@@ -332,14 +332,12 @@ a.card img {
 
 .detail-shorts {
     display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 40px;
-    max-width: 1100px;
     margin: 0 auto;
     min-height: calc(100vh - 99px);
-    padding: 24px 20px 40px;
+    padding: 16px 16px 32px;
     box-sizing: border-box;
 }
 
@@ -352,6 +350,7 @@ a.card img {
 
 .detail-video-frame {
     position: relative;
+    isolation: isolate;
     background-color: #000000;
     overflow: hidden;
     border-radius: 20px;
@@ -360,13 +359,19 @@ a.card img {
 }
 
 .detail-video-frame--shorts {
-    width: min(480px, 63vw);
+    width: min(500px, 68vw);
     aspect-ratio: 9 / 16;
-    max-height: min(720px, calc(100vh - 140px));
+    max-height: min(860px, calc(100vh - 88px));
+}
+
+/* Текст снизу не заходит под правую колонку метрик */
+.detail-video-frame--with-rail .detail-video__caption--shorts {
+    padding-right: 80px;
 }
 
 .detail-video {
     position: absolute;
+    z-index: 0;
     top: 0;
     left: 0;
     width: 100%;
@@ -383,98 +388,172 @@ a.card img {
     background: linear-gradient(to top, rgba(0, 0, 0, 0.88), transparent 70%);
 }
 
-.detail-video__caption--minimal {
-    padding: 14px 14px 18px;
+.detail-video__caption--shorts {
+    z-index: 4;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    width: 100%;
+    padding: 12px 14px 10px 14px;
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-start;
+    text-align: left;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.5) 52%, transparent 100%);
+    pointer-events: none;
 }
 
 .detail-video__route {
     font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 17px;
+    font-size: 19px;
     font-weight: 800;
     color: #ffffff;
     letter-spacing: 0.02em;
     margin: 0;
     line-height: 1.2;
+    text-align: left;
+    width: 100%;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
 }
 
-.detail-shorts__side {
-    flex: 1;
-    min-width: 0;
-    max-width: 520px;
-    padding: 8px 0 0;
-    color: #ffffff;
-}
-
-.detail-shorts__title {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 28px;
-    font-weight: 800;
-    color: #ffffff;
-    margin: 0 0 10px 0;
-    line-height: 1.15;
-}
-
-.detail-shorts__description {
+.detail-video__blurb {
     font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 15px;
+    font-size: 12.5px;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.88);
-    line-height: 1.65;
-    margin: 0 0 28px 0;
+    line-height: 1.45;
+    margin: 6px 0 0;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
 }
 
-.detail-shorts__metrics {
-    padding-top: 8px;
-    border-top: 1px solid #2e2e32;
+/* Наложение на видео, справа: Δv и топливо (выше слоя <video>, ниже подписи снизу) */
+.detail-video__rail {
+    position: absolute;
+    z-index: 3;
+    right: 10px;
+    top: 50%;
+    /* translate3d: отдельный слой поверх <video> в Chromium/WebKit */
+    transform: translate3d(0, -50%, 0);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 18px;
+    pointer-events: none;
 }
 
-.detail-shorts__metrics-heading {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 16px;
-    font-weight: 700;
+.detail-rail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    min-width: 52px;
     color: #ffffff;
-    margin: 0 0 16px 0;
+    text-align: right;
+    cursor: default;
+    user-select: none;
 }
 
-.detail-shorts__metric {
-    margin-bottom: 18px;
+.detail-rail-item__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.detail-shorts__metric:last-child {
-    margin-bottom: 0;
+.detail-rail-item__icon svg {
+    width: 24px;
+    height: 24px;
 }
 
-.detail-shorts__metric-label {
-    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+.detail-rail-item__value {
+    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13px;
-    font-weight: 400;
-    color: var(--color-muted);
-    margin-bottom: 6px;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.detail-shorts__metric-value {
-    font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    color: #ffffff;
+.detail-rail-item__unit {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1;
+    margin-top: -2px;
 }
 
-@media (max-width: 880px) {
-    .detail-shorts {
-        flex-direction: column;
-        align-items: center;
-        gap: 28px;
-    }
+.detail-rail-item__label {
+    font-family: "Public Sans Web", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 9px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    max-width: 100%;
+}
 
+@media (max-width: 520px) {
     .detail-video-frame--shorts {
-        width: min(480px, 88vw);
-        max-height: min(640px, 58vh);
+        width: min(440px, calc(100vw - 28px));
+        max-height: min(780px, calc(100vh - 80px));
     }
 
-    .detail-shorts__side {
-        max-width: 100%;
-        width: 100%;
-        padding-top: 0;
+    .detail-video__rail {
+        right: 8px;
+        gap: 14px;
+    }
+
+    .detail-rail-item {
+        min-width: 48px;
+    }
+
+    .detail-rail-item__icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .detail-rail-item__icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .detail-rail-item__value {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 380px) {
+    .detail-video-frame--shorts {
+        width: min(420px, 94vw);
+    }
+
+    .detail-video__caption--shorts {
+        padding: 10px 12px 8px 12px;
+    }
+
+    .detail-video-frame--with-rail .detail-video__caption--shorts {
+        padding-right: 72px;
     }
 }
 

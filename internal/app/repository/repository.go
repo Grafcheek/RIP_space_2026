@@ -48,30 +48,30 @@ type InterplanetaryFlightRequest struct {
 	Title       string
 	Description string
 
-	SpacecraftDryMassKg float64 // ER: spacecraft_drymass_kg — «м-м» масса космического аппарата
-	EngineMassKg        float64 // масса двигательной установки (тема варианта)
-	IspSeconds          float64 // удельный импульс для формулы Циолковского
+	SpacecraftDryMassKg float64 
+	EngineMassKg        float64 
+	IspSeconds          float64 
 
-	TotalFuelMassKg float64 // ER: total_fuel_mass_kg — результат: суммарная масса топлива по сегментам
-	TotalDeltaVms     float64 // ER: total_delta_v_kms — у нас хранится суммарное Δv в м/с (аналог)
+	TotalFuelMassKg float64 
+	TotalDeltaVms     float64 
 
-	FlightsInRequest []InterplanetaryFlightInRequest // строки связи interplanetary_flights_in_request
-	RouteCount       int                             // число сегментов в заявке (для UI / корзина)
+	FlightsInRequest []InterplanetaryFlightInRequest 
+	RouteCount       int
 }
 
 // InterplanetaryFlightInRequest — связь м-м: заявка ↔ перелёт (таблица interplanetary_flights_in_request в ER).
 // Содержит поля связи (порядок, quantity, …) и расчётные поля по сегменту (результат на строку).
 type InterplanetaryFlightInRequest struct {
-	Flight InterplanetaryFlight // FK → interplanetary_flight_id
+	Flight InterplanetaryFlight // FK → 
 
-	SegmentOrder  int     // ER: segment_order
-	Quantity      int     // ER: quantity
-	IsPrimary     bool    // ER: is_primary
-	PayloadMassKg float64 // ER: payload_mass_kg (в демо 0)
+	SegmentOrder  int    
+	Quantity      int     
+	IsPrimary     bool    
+	PayloadMassKg float64 
 
-	DeltaVms     float64 // ER: delta_v_kms — у нас Δv сегмента в м/с
-	PropellantKg float64 // вклад в топливо по сегменту (кг)
-	EnergyJ      float64 // служебная оценка энергии (не в ER)
+	DeltaVms     float64 
+	PropellantKg float64 
+	EnergyJ      float64 
 }
 
 // GetInterplanetaryFlights возвращает каталог межпланетных перелётов (interplanetary_flights).

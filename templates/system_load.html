@@ -82,12 +82,34 @@
                                 <span class="basket-segment__field-name">Isp, с</span>
                                 <input type="number" name="isp_sec" value="{{ printf "%.0f" .SegmentIspSec }}" step="1" class="basket-segment__input">
                             </label>
-                            <button type="submit" class="basket-segment__submit">Рассчитать</button>
                         </form>
                     </div>
                 </article>
                 {{ end }}
             </div>
         </div>
+        <script>
+            (function () {
+                document.querySelectorAll(".basket-segment__form").forEach(function (form) {
+                    var timer = null;
+                    function scheduleRecalc() {
+                        if (timer) clearTimeout(timer);
+                        timer = setTimeout(function () {
+                            timer = null;
+                            form.requestSubmit();
+                        }, 350);
+                    }
+                    function recalcNow() {
+                        if (timer) clearTimeout(timer);
+                        timer = null;
+                        form.requestSubmit();
+                    }
+                    form.querySelectorAll('input[type="number"]').forEach(function (input) {
+                        input.addEventListener("input", scheduleRecalc);
+                        input.addEventListener("change", recalcNow);
+                    });
+                });
+            })();
+        </script>
     </body>
 </html>

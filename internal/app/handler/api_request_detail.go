@@ -17,9 +17,9 @@ type interplanetaryFlightRequestDetail struct {
 	CreatedAt           string                                   `json:"created_at"`
 	FormedAt            *string                                  `json:"formed_at,omitempty"`
 	CompletedAt         *string                                  `json:"completed_at,omitempty"`
-	SpacecraftDryMassKg float64                                  `json:"spacecraft_dry_mass_kg"`
+	SpacecraftDryMassKg float64                                  `json:"spacecraft_dry_mass"`
 	EngineIspSec        float64                                  `json:"engine_isp_sec"`
-	TotalFuelMassKg     *float64                                 `json:"total_fuel_mass_kg,omitempty"`
+	TotalFuelMassKg     *float64                                 `json:"total_fuel_mass,omitempty"`
 	Items               []interplanetaryFlightRequestLineFlatDTO `json:"items"`
 }
 
@@ -29,30 +29,29 @@ type interplanetaryFlightRequestLineFlatDTO struct {
 	SegmentOrder int `json:"segment_order"`
 	IsPrimary    bool `json:"is_primary"`
 
-	PayloadMassKg    *float64 `json:"payload_mass_kg,omitempty"`
-	SegmentDryMassKg *float64 `json:"segment_dry_mass_kg,omitempty"`
+	PayloadMassKg    *float64 `json:"payload_mass,omitempty"`
+	SegmentDryMassKg *float64 `json:"segment_dry_mass,omitempty"`
 	SegmentIspSec    *float64 `json:"segment_isp_sec,omitempty"`
 
 	// Сохранённые при формировании заявки (лаб. 2 / FormRequest)
-	StoredDeltaVMs   *float64 `json:"stored_delta_v_ms,omitempty"`
-	StoredFuelMassKg *float64 `json:"stored_fuel_mass_kg,omitempty"`
+	StoredDeltaVMs   *float64 `json:"stored_delta_v,omitempty"`
+	StoredFuelMassKg *float64 `json:"stored_fuel_mass,omitempty"`
 
-	// Поля межпланетного перелёта (услуги) в том же объекте
-	InterplanetaryFlightTitle       string  `json:"interplanetary_flight_title"`
-	InterplanetaryFlightFrom        string  `json:"interplanetary_flight_from"`
-	InterplanetaryFlightTo          string  `json:"interplanetary_flight_to"`
-	InterplanetaryFlightDescription string  `json:"interplanetary_flight_description"`
-	FromOrbitRadiusKm               float64 `json:"from_orbit_radius_km"`
-	ToOrbitRadiusKm                 float64 `json:"to_orbit_radius_km"`
-	ImageKey                        string  `json:"image_key"`
-	VideoKey                        string  `json:"video_key"`
-	ImageURL                        string  `json:"image_url"`
-	VideoURL                        string  `json:"video_url"`
+	// Поля услуги planet в том же объекте
+	PlanetTitle       string  `json:"planet_title"`
+	PlanetFrom        string  `json:"planet_from"`
+	PlanetTo          string  `json:"planet_to"`
+	PlanetDescription string  `json:"planet_description"`
+	FromOrbitRadiusKm float64 `json:"from_orbit_radius_km"`
+	ToOrbitRadiusKm   float64 `json:"to_orbit_radius_km"`
+	ImageKey          string  `json:"image_key"`
+	VideoKey          string  `json:"video_key"`
+	ImageURL          string  `json:"image_url"`
+	VideoURL          string  `json:"video_url"`
 
 	// Текущий расчёт по формулам лаб. 2 (удобно и для черновика)
-	DeltaVMs     float64 `json:"delta_v_ms"`
-	PropellantKg float64 `json:"propellant_kg"`
-	EnergyJ      float64 `json:"energy_j"`
+	DeltaVMs     float64 `json:"delta_v"`
+	PropellantKg float64 `json:"propellant"`
 }
 
 func spaceObjectURL(key string) string {
@@ -96,8 +95,6 @@ func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interp
 		}
 		dv := repository.CalculateDeltaVms(route.FromOrbitKm, route.ToOrbitKm)
 		fuel := repository.CalculatePropellantKg(mass, dv, isp)
-		energy := repository.CalculateEnergyJ(mass, fuel, dv)
-
 		line := interplanetaryFlightRequestLineFlatDTO{
 			RouteID:                         it.RouteID,
 			Quantity:                        it.Quantity,
@@ -108,10 +105,10 @@ func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interp
 			SegmentIspSec:                   it.SegmentIspSec,
 			StoredDeltaVMs:                  it.DeltaVKms,
 			StoredFuelMassKg:                it.FuelMassKg,
-			InterplanetaryFlightTitle:       route.Title,
-			InterplanetaryFlightFrom:        route.From,
-			InterplanetaryFlightTo:          route.To,
-			InterplanetaryFlightDescription: route.Description,
+			PlanetTitle:                     route.Title,
+			PlanetFrom:                      route.From,
+			PlanetTo:                        route.To,
+			PlanetDescription:               route.Description,
 			FromOrbitRadiusKm:               route.FromOrbitKm,
 			ToOrbitRadiusKm:                 route.ToOrbitKm,
 			ImageKey:                        route.Image,
@@ -120,7 +117,6 @@ func buildInterplanetaryFlightRequestDetail(fr *repository.FlightRequest) interp
 			VideoURL:                        spaceObjectURL(route.Video),
 			DeltaVMs:                        dv,
 			PropellantKg:                    fuel,
-			EnergyJ:                         energy,
 		}
 		out.Items = append(out.Items, line)
 	}

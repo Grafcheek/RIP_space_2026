@@ -127,12 +127,7 @@ func (h *Handler) APILogoutInterplanetaryFlightsUser(ctx *gin.Context) {
 		return
 	}
 
-	userID, _ := claims["user_id"].(string)
-	if userID == "" {
-		userID = "unknown"
-	}
-
-	if err := h.Repository.AddTokenToBlacklist(context.Background(), tokenString, ttl, userID); err != nil {
+	if err := h.Repository.AddTokenToBlacklist(context.Background(), tokenString, ttl); err != nil {
 		h.apiError(ctx, http.StatusInternalServerError, err)
 		return
 	}

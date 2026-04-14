@@ -56,13 +56,13 @@ func blacklistKeyForToken(tokenString string) string {
 	return "blacklist:" + hex.EncodeToString(h[:])
 }
 
-// AddTokenToBlacklist сохраняет JTI-хеш токена в Redis до истечения срока действия JWT.
-func (r *Repository) AddTokenToBlacklist(ctx context.Context, tokenString string, ttl time.Duration, userID string) error {
+// AddTokenToBlacklist сохраняет отметку об отзыве JWT в Redis до его истечения.
+func (r *Repository) AddTokenToBlacklist(ctx context.Context, tokenString string, ttl time.Duration) error {
 	if ttl <= 0 {
 		return nil
 	}
 	key := blacklistKeyForToken(tokenString)
-	value := "user_id:" + userID
+	value := "revoked"
 	return r.rdb.Set(ctx, key, value, ttl).Err()
 }
 

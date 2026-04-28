@@ -18,7 +18,7 @@ type interplanetaryFlightRequestDetail struct {
 	FormedAt            *string                                  `json:"formed_at,omitempty"`
 	CompletedAt         *string                                  `json:"completed_at,omitempty"`
 	SpacecraftDryMassKg float64                                  `json:"spacecraft_dry_mass"`
-	EngineIspSec        float64                                  `json:"engine_isp_sec"`
+	EngineIspSec        float64                                  `json:"engine_isp"`
 	TotalFuelMassKg     *float64                                 `json:"total_fuel_mass,omitempty"`
 	Items               []interplanetaryFlightRequestLineFlatDTO `json:"items"`
 }
@@ -31,10 +31,10 @@ type interplanetaryFlightRequestLineFlatDTO struct {
 
 	PayloadMassKg    *float64 `json:"payload_mass,omitempty"`
 	SegmentDryMassKg *float64 `json:"segment_dry_mass,omitempty"`
-	SegmentIspSec    *float64 `json:"segment_isp_sec,omitempty"`
+	SegmentIspSec    *float64 `json:"segment_isp,omitempty"`
 
 	// Сохранённые при формировании заявки (лаб. 2 / FormRequest)
-	StoredDeltaVMs   *float64 `json:"stored_delta_v,omitempty"`
+	StoredDeltaVMs   *float64 `json:"stored_delta,omitempty"`
 	StoredFuelMassKg *float64 `json:"stored_fuel_mass,omitempty"`
 
 	// Поля услуги planet в том же объекте
@@ -42,15 +42,15 @@ type interplanetaryFlightRequestLineFlatDTO struct {
 	PlanetFrom        string  `json:"planet_from"`
 	PlanetTo          string  `json:"planet_to"`
 	PlanetDescription string  `json:"planet_description"`
-	FromOrbitRadiusKm float64 `json:"from_orbit_radius_km"`
-	ToOrbitRadiusKm   float64 `json:"to_orbit_radius_km"`
+	FromOrbitRadiusKm float64 `json:"from_orbit_radius"`
+	ToOrbitRadiusKm   float64 `json:"to_orbit_radius"`
 	ImageKey          string  `json:"image_key"`
 	VideoKey          string  `json:"video_key"`
 	ImageURL          string  `json:"image_url"`
 	VideoURL          string  `json:"video_url"`
 
 	// Текущий расчёт по формулам лаб. 2 (удобно и для черновика)
-	DeltaVMs     float64 `json:"delta_v"`
+	DeltaVMs     float64 `json:"delta"`
 	PropellantKg float64 `json:"propellant"`
 }
 

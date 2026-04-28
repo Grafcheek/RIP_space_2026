@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"math"
 	"strings"
 )
 
@@ -20,12 +19,6 @@ func NewRepository() (*Repository, error) {
 	return &Repository{}, nil
 }
 
-const (
-	auMeters = 149_597_870_700.0 // 1 а.е. в метрах
-	muSun    = 1.32712440018e20  // гравитационный параметр Солнца, м^3/с^2
-	g0       = 9.80665           // стандартное ускорение свободного падения, м/с^2
-)
-
 // InterplanetaryFlight — каталог услуги «межпланетный перелёт» (сущность interplanetary_flights в ER).
 // Расчёты упрощены до гелиоцентрического перехода Гомана (круговые орбиты).
 type InterplanetaryFlight struct {
@@ -39,6 +32,149 @@ type InterplanetaryFlight struct {
 	FromOrbitAU float64 // радиус орбиты отправителя (а.е.)
 	ToOrbitAU   float64 // радиус орбиты получателя (а.е.)
 }
+
+// PlanetDataModel — модель planets из ER.
+type PlanetDataModel struct {
+	ID            int
+	Name          string
+	Description   string
+	IsActive      bool
+	ImageURL      string // ключ изображения в Minio
+	RequiredDelta float64
+}
+
+// InterplanetaryFlightDataModel — модель interplanetary_flights из ER (словарь заявок/расчётов).
+type InterplanetaryFlightDataModel struct {
+	ID               int
+	Status           string
+	CreatedAt        string
+	CreatedBy        int
+	FormedAt         string
+	ModeratedBy      int
+	CompletedAt      string
+	SpacecraftDrymass float64
+	TotalFuelMass    float64
+	TotalDelta       float64
+}
+
+// PlanetInFlightDataModel — модель planets_in_flights из ER (m-m request↔planet).
+type PlanetInFlightDataModel struct {
+	ID          int
+	PlanetID    int
+	RequestID   int
+	PayloadMass float64
+	Delta       float64
+
+	// Явные поля m-m для показа в Lab1.
+	SegmentOrder int
+	Quantity     int
+	IsPrimary    bool
+	Comment      string
+}
+
+var (
+	planetsDictionary = map[int]PlanetDataModel{
+		1: {
+			ID:            1,
+			Name:          "Юпитер",
+			Description:   "Газовый гигант. Дальняя внешняя миссия.",
+			IsActive:      true,
+			ImageURL:      "Jupiter.jpeg",
+			RequiredDelta: 8800,
+		},
+		2: {
+			ID:            2,
+			Name:          "Сатурн",
+			Description:   "Миссия к Сатурну (упрощённая модель).",
+			IsActive:      true,
+			ImageURL:      "Saturn.jpg",
+			RequiredDelta: 9800,
+		},
+		3: {
+			ID:            3,
+			Name:          "Уран",
+			Description:   "Перелёт к ледяному гиганту Урану.",
+			IsActive:      true,
+			ImageURL:      "Uranus.jpg",
+			RequiredDelta: 10600,
+		},
+		4: {
+			ID:            4,
+			Name:          "Нептун",
+			Description:   "Одна из самых дорогих миссий по суммарному Δv.",
+			IsActive:      true,
+			ImageURL:      "Neptune.jpg",
+			RequiredDelta: 11300,
+		},
+	}
+
+	planetOrder = []int{1, 2, 3, 4}
+
+	interplanetaryFlightsDictionary = map[int]InterplanetaryFlightDataModel{
+		1: {
+			ID:                1,
+			Status:            "completed",
+			CreatedAt:         "2026-04-25T10:30:00Z",
+			CreatedBy:         1,
+			FormedAt:          "2026-04-25T11:00:00Z",
+			ModeratedBy:       2,
+			CompletedAt:       "2026-04-25T11:40:00Z",
+			SpacecraftDrymass: 2000,
+			TotalFuelMass:     14800,
+			TotalDelta:        40500,
+		},
+	}
+
+	// planetsInFlightsDictionary — словарь строк m-m planets_in_flights.
+	planetsInFlightsDictionary = map[int][]PlanetInFlightDataModel{
+		1: {
+			{
+				ID:           1,
+				PlanetID:     1,
+				RequestID:    1,
+				PayloadMass:  600,
+				Delta:        8800,
+				SegmentOrder: 1,
+				Quantity:     1,
+				IsPrimary:    true,
+				Comment:      "Основная цель миссии.",
+			},
+			{
+				ID:           2,
+				PlanetID:     2,
+				RequestID:    1,
+				PayloadMass:  450,
+				Delta:        9800,
+				SegmentOrder: 2,
+				Quantity:     1,
+				IsPrimary:    false,
+				Comment:      "Дополнительный пролёт.",
+			},
+			{
+				ID:           3,
+				PlanetID:     3,
+				RequestID:    1,
+				PayloadMass:  350,
+				Delta:        10600,
+				SegmentOrder: 3,
+				Quantity:     1,
+				IsPrimary:    false,
+				Comment:      "Расширение маршрута.",
+			},
+			{
+				ID:           4,
+				PlanetID:     4,
+				RequestID:    1,
+				PayloadMass:  250,
+				Delta:        11300,
+				SegmentOrder: 4,
+				Quantity:     1,
+				IsPrimary:    false,
+				Comment:      "Финальная дальняя точка.",
+			},
+		},
+	}
+)
 
 // InterplanetaryFlightRequest — заявка на расчёт (сущность interplanetary_flights_requests в ER).
 // Поля м-м по массам аппарата и ДУ + агрегированный результат расчёта (total_*).
@@ -76,85 +212,27 @@ type InterplanetaryFlightInRequest struct {
 
 // GetInterplanetaryFlights возвращает каталог межпланетных перелётов (interplanetary_flights).
 func (r *Repository) GetInterplanetaryFlights() ([]InterplanetaryFlight, error) {
-	routes := []InterplanetaryFlight{
-		{
-			ID:          1,
-			Title:       "Юпитер",
+	routes := make([]InterplanetaryFlight, 0, len(planetOrder))
+	for _, id := range planetOrder {
+		pl, ok := planetsDictionary[id]
+		if !ok || !pl.IsActive {
+			continue
+		}
+		videoKey := pl.ImageURL
+		videoKey = strings.TrimSuffix(videoKey, ".jpeg")
+		videoKey = strings.TrimSuffix(videoKey, ".jpg")
+		videoKey = strings.TrimSuffix(videoKey, ".png")
+		routes = append(routes, InterplanetaryFlight{
+			ID:          pl.ID,
+			Title:       pl.Name,
 			From:        "Земля",
-			To:          "Юпитер",
-			Description: "Упрощённый перелёт к газовому гиганту. Модель: переход Гомана вокруг Солнца (без гравитационных манёвров, без учёта наклонения орбит).",
-			Image:       "Jupiter.jpeg",
-			Video:       "Jupiter_vid.mp4",
+			To:          pl.Name,
+			Description: pl.Description,
+			Image:       pl.ImageURL,
+			Video:       videoKey + "_vid.mp4",
 			FromOrbitAU: 1.000,
-			ToOrbitAU:   5.204,
-		},
-		{
-			ID:          2,
-			Title:       "Сатурн",
-			From:        "Земля",
-			To:          "Сатурн",
-			Description: "Дальняя цель: перелёт к Сатурну. В реальности часто используют гравитационные манёвры (как у Voyager), но здесь считаем идеализированный переход Гомана.",
-			Image:       "Saturn.jpg",
-			Video:       "Saturn_vid.mp4",
-			FromOrbitAU: 1.000,
-			ToOrbitAU:   9.583,
-		},
-		{
-			ID:          3,
-			Title:       "Уран",
-			From:        "Земля",
-			To:          "Уран",
-			Description: "Перелёт к ледяному гиганту (идеализированная гелиоцентрическая траектория).",
-			Image:       "Uranus.jpg",
-			Video:       "Uranus_vid.mp4",
-			FromOrbitAU: 1.000,
-			ToOrbitAU:   19.218,
-		},
-		{
-			ID:          4,
-			Title:       "Нептун",
-			From:        "Земля",
-			To:          "Нептун",
-			Description: "Одна из самых «дорогих» целей по Δv в упрощённой модели. Voyager 2 долетел до Нептуна с помощью гравитационных манёвров — здесь их не учитываем.",
-			Image:       "Neptune.jpg",
-			Video:       "Neptune_vid.mp4",
-			FromOrbitAU: 1.000,
-			ToOrbitAU:   30.110,
-		},
-		// Обратные interplanetary flights: с планет обратно на Землю.
-		{
-			ID:          5,
-			Title:       "Обратный с Юпитера",
-			From:        "Юпитер",
-			To:          "Земля",
-			Description: "Обратный перелёт с орбиты Юпитера на Землю. Те же параметры орбит, но теперь считаем характеристическую скорость и топливо для пути домой.",
-			Image:       "Earth.jpg",
-			Video:       "Earth_vid.mp4",
-			FromOrbitAU: 5.204,
 			ToOrbitAU:   1.000,
-		},
-		{
-			ID:          6,
-			Title:       "Обратный с Сатурна",
-			From:        "Сатурн",
-			To:          "Земля",
-			Description: "Обратный перелёт с орбиты Сатурна на Землю: моделируем возврат после глубокой внешней миссии и оцениваем Δv и массу топлива.",
-			Image:       "Earth.jpg",
-			Video:       "Earth_vid.mp4",
-			FromOrbitAU: 9.583,
-			ToOrbitAU:   1.000,
-		},
-		{
-			ID:          7,
-			Title:       "Обратный с Урана",
-			From:        "Уран",
-			To:          "Земля",
-			Description: "Обратный перелёт с орбиты Урана на Землю. Ледяной гигант остаётся позади, а мы считаем Δv и топливо для возвращения к Земле.",
-			Image:       "Earth.jpg",
-			Video:       "Earth_vid.mp4",
-			FromOrbitAU: 19.218,
-			ToOrbitAU:   1.000,
-		},
+		})
 	}
 
 	if len(routes) == 0 {
@@ -202,115 +280,59 @@ func (r *Repository) SearchInterplanetaryFlights(query string) ([]Interplanetary
 	return result, nil
 }
 
-// CalculateHohmannDeltaVms считает суммарное Δv (м/с) для перехода Гомана между круговыми орбитами.
-func CalculateHohmannDeltaVms(r1AU, r2AU float64) float64 {
-	if r1AU <= 0 || r2AU <= 0 {
-		return 0
-	}
-	r1 := r1AU * auMeters
-	r2 := r2AU * auMeters
-
-	v1 := math.Sqrt(muSun / r1)
-	v2 := math.Sqrt(muSun / r2)
-	a := (r1 + r2) / 2.0
-
-	vt1 := math.Sqrt(muSun*(2.0/r1-1.0/a))
-	vt2 := math.Sqrt(muSun*(2.0/r2-1.0/a))
-
-	dv1 := math.Abs(vt1 - v1)
-	dv2 := math.Abs(v2 - vt2)
-	return dv1 + dv2
-}
-
-// CalculatePropellantKg оценивает массу топлива по формуле Циолковского (mf = dryMass).
-func CalculatePropellantKg(dryMassKg, deltaVms, ispSeconds float64) float64 {
-	if dryMassKg <= 0 || deltaVms <= 0 || ispSeconds <= 0 {
-		return 0
-	}
-	return dryMassKg * (math.Exp(deltaVms/(ispSeconds*g0)) - 1.0)
-}
-
-// CalculateEnergyJ даёт простую оценку энергии на «разгон» под Δv (не орбитальная механика).
-func CalculateEnergyJ(dryMassKg, propellantKg, deltaVms float64) float64 {
-	if deltaVms <= 0 {
-		return 0
-	}
-	m0 := dryMassKg + propellantKg
-	if m0 <= 0 {
-		return 0
-	}
-	return 0.5 * m0 * deltaVms * deltaVms
-}
-
-func (r *Repository) buildInterplanetaryFlightRequest(id int, title, description string, flightIDs []int, spacecraftDryMassKg, engineMassKg, ispSeconds float64) (InterplanetaryFlightRequest, error) {
-	catalog, err := r.GetInterplanetaryFlights()
-	if err != nil {
-		return InterplanetaryFlightRequest{}, err
-	}
-
-	flightMap := make(map[int]InterplanetaryFlight, len(catalog))
-	for _, f := range catalog {
-		flightMap[f.ID] = f
-	}
-
-	var rows []InterplanetaryFlightInRequest
-	var totalFuel, totalDv float64
-	segmentOrder := 0
-
-	for _, fid := range flightIDs {
-		fl, ok := flightMap[fid]
-		if !ok {
-			continue
-		}
-		segmentOrder++
-
-		dv := CalculateHohmannDeltaVms(fl.FromOrbitAU, fl.ToOrbitAU)
-		prop := CalculatePropellantKg(spacecraftDryMassKg, dv, ispSeconds)
-		energy := CalculateEnergyJ(spacecraftDryMassKg, prop, dv)
-		totalFuel += prop
-		totalDv += dv
-
-		rows = append(rows, InterplanetaryFlightInRequest{
-			Flight:        fl,
-			SegmentOrder:  segmentOrder,
-			Quantity:      1,
-			IsPrimary:     segmentOrder == 1,
-			PayloadMassKg: 0,
-			DeltaVms:      dv,
-			PropellantKg:  prop,
-			EnergyJ:       energy,
-		})
-	}
-
-	return InterplanetaryFlightRequest{
-		ID:                  id,
-		Title:               title,
-		Description:         description,
-		SpacecraftDryMassKg: spacecraftDryMassKg,
-		EngineMassKg:        engineMassKg,
-		IspSeconds:          ispSeconds,
-		TotalFuelMassKg:     totalFuel,
-		TotalDeltaVms:       totalDv,
-		FlightsInRequest:    rows,
-		RouteCount:          len(rows),
-	}, nil
-}
-
 // GetInterplanetaryFlightRequests список заявок (interplanetary_flights_requests).
 func (r *Repository) GetInterplanetaryFlightRequests() ([]InterplanetaryFlightRequest, error) {
-	req, err := r.buildInterplanetaryFlightRequest(
-		1,
-		"Расчёт параметров межпланетного перелёта",
-		"Заявка на расчёт характеристической скорости Δv и необходимого количества топлива для указанных масс космического аппарата и двигательной установки.",
-		[]int{1, 5, 2, 6, 3, 7, 4},
-		2_000,
-		320,
-		320,
-	)
+	catalog, err := r.GetInterplanetaryFlights()
 	if err != nil {
 		return nil, err
 	}
-	return []InterplanetaryFlightRequest{req}, nil
+	flightMap := make(map[int]InterplanetaryFlight, len(catalog))
+	for _, fl := range catalog {
+		flightMap[fl.ID] = fl
+	}
+
+	requestOrder := []int{1}
+	requests := make([]InterplanetaryFlightRequest, 0, len(requestOrder))
+
+	for _, requestID := range requestOrder {
+		model, ok := interplanetaryFlightsDictionary[requestID]
+		if !ok {
+			continue
+		}
+
+		rowsData := planetsInFlightsDictionary[requestID]
+		rows := make([]InterplanetaryFlightInRequest, 0, len(rowsData))
+		for _, link := range rowsData {
+			fl, exists := flightMap[link.PlanetID]
+			if !exists {
+				continue
+			}
+			rows = append(rows, InterplanetaryFlightInRequest{
+				Flight:        fl,
+				SegmentOrder:  link.SegmentOrder,
+				Quantity:      link.Quantity,
+				IsPrimary:     link.IsPrimary,
+				PayloadMassKg: link.PayloadMass,
+				DeltaVms:      link.Delta,
+				PropellantKg:  link.PayloadMass * 2.0,
+				EnergyJ:       link.Delta * 1000.0,
+			})
+		}
+
+		requests = append(requests, InterplanetaryFlightRequest{
+			ID:                  model.ID,
+			Title:               "Заявка межпланетного рейса #" + fmt.Sprintf("%d", model.ID),
+			Description:         "Словарь interplanetary_flights + строки m-m planets_in_flights с результатами расчётов по сегментам.",
+			SpacecraftDryMassKg: model.SpacecraftDrymass,
+			EngineMassKg:        320,
+			IspSeconds:          320,
+			TotalFuelMassKg:     model.TotalFuelMass,
+			TotalDeltaVms:       model.TotalDelta,
+			FlightsInRequest:    rows,
+			RouteCount:          len(rows),
+		})
+	}
+	return requests, nil
 }
 
 // GetInterplanetaryFlightRequest заявка по id (interplanetary_flights_requests.id).

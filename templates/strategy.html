@@ -23,6 +23,18 @@
                     </video>
                     {{ if .hasFlightInRequestData }}
                     <aside class="detail-video__rail" aria-label="Параметры расчёта перелёта">
+                        <div class="detail-rail-item" title="Масса аппарата на текущем сегменте">
+                            <div class="detail-rail-item__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7 7.5H17V16.5H7V7.5Z" stroke="currentColor" stroke-width="1.35"/>
+                                    <path d="M9.5 5.5H14.5V7.5H9.5V5.5Z" stroke="currentColor" stroke-width="1.35"/>
+                                    <path d="M10 10.5H14M10 13.5H14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="detail-rail-item__value">{{ printf "%.0f" .flightInRequest.SpacecraftMassKg }}</span>
+                            <span class="detail-rail-item__unit">кг</span>
+                            <span class="detail-rail-item__label">Масса КА</span>
+                        </div>
                         <div class="detail-rail-item" title="Характеристическая скорость Δv">
                             <div class="detail-rail-item__icon" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

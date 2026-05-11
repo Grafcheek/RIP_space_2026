@@ -6,9 +6,9 @@ import (
 )
 
 // Соответствие сущностям ER (interplanetary flight):
-//   InterplanetaryFlight            → interplanetary_flights (каталог перелётов / «услуга»).
+//   InterplanetaryFlight            → interplanetary_flights (каталог услуг / перелётов).
 //   InterplanetaryFlightRequest     → interplanetary_flights_requests (заявка).
-//   InterplanetaryFlightInRequest   → interplanetary_flights_in_request (м-м заявка↔перелёт + поля связи и расчёт по сегменту).
+//   InterplanetaryFlightInRequest   → interplanetary_flights_in_request (m-m заявка↔услуга + расчёт по строке).
 // Lab 1: данные в памяти, без SQL.
 
 // Repository — хранилище данных (Lab 1: данные в массивах, без БД).
@@ -33,7 +33,7 @@ type InterplanetaryFlight struct {
 	ToOrbitAU   float64 // радиус орбиты получателя (а.е.)
 }
 
-// PlanetDataModel — модель planets из ER.
+// PlanetDataModel — словарная запись отдельной услуги.
 type PlanetDataModel struct {
 	ID            int
 	Name          string
@@ -43,27 +43,29 @@ type PlanetDataModel struct {
 	RequiredDelta float64
 }
 
-// InterplanetaryFlightDataModel — модель interplanetary_flights из ER (словарь заявок/расчётов).
+// InterplanetaryFlightDataModel — словарная запись заявки.
 type InterplanetaryFlightDataModel struct {
-	ID               int
-	Status           string
-	CreatedAt        string
-	CreatedBy        int
-	FormedAt         string
-	ModeratedBy      int
-	CompletedAt      string
-	SpacecraftDrymass float64
-	TotalFuelMass    float64
-	TotalDelta       float64
+	ID            int
+	Status        string
+	CreatedAt     string
+	CreatedBy     int
+	FormedAt      string
+	ModeratedBy   int
+	CompletedAt   string
+	EngineMassKg  float64
+	IspSeconds    float64
+	TotalFuelMass float64
+	TotalDelta    float64
 }
 
-// PlanetInFlightDataModel — модель planets_in_flights из ER (m-m request↔planet).
-type PlanetInFlightDataModel struct {
-	ID          int
-	PlanetID    int
-	RequestID   int
-	PayloadMass float64
-	Delta       float64
+// PlanetsInFlightDataModel — строка m-m внутри заявки.
+type PlanetsInFlightDataModel struct {
+	ID               int
+	FlightID         int
+	RequestID        int
+	PayloadMass      float64
+	SpacecraftMassKg float64
+	Delta            float64
 
 	// Явные поля m-m для показа в Lab1.
 	SegmentOrder int
@@ -73,7 +75,7 @@ type PlanetInFlightDataModel struct {
 }
 
 var (
-	planetsDictionary = map[int]PlanetDataModel{
+	Planets = map[int]PlanetDataModel{
 		1: {
 			ID:            1,
 			Name:          "Юпитер",
@@ -110,111 +112,118 @@ var (
 
 	planetOrder = []int{1, 2, 3, 4}
 
-	interplanetaryFlightsDictionary = map[int]InterplanetaryFlightDataModel{
+	interplanetaryFlight = map[int]InterplanetaryFlightDataModel{
 		1: {
-			ID:                1,
-			Status:            "completed",
-			CreatedAt:         "2026-04-25T10:30:00Z",
-			CreatedBy:         1,
-			FormedAt:          "2026-04-25T11:00:00Z",
-			ModeratedBy:       2,
-			CompletedAt:       "2026-04-25T11:40:00Z",
-			SpacecraftDrymass: 2000,
-			TotalFuelMass:     14800,
-			TotalDelta:        40500,
+			ID:            1,
+			Status:        "completed",
+			CreatedAt:     "2026-04-25T10:30:00Z",
+			CreatedBy:     1,
+			FormedAt:      "2026-04-25T11:00:00Z",
+			ModeratedBy:   2,
+			CompletedAt:   "2026-04-25T11:40:00Z",
+			EngineMassKg:  320,
+			IspSeconds:    320,
+			TotalFuelMass: 14800,
+			TotalDelta:    40500,
 		},
 	}
 
-	// planetsInFlightsDictionary — словарь строк m-m planets_in_flights.
-	planetsInFlightsDictionary = map[int][]PlanetInFlightDataModel{
+	// PlanetsInFlight — М-М 
+	PlanetsInFlight = map[int][]PlanetsInFlightDataModel{
 		1: {
 			{
-				ID:           1,
-				PlanetID:     1,
-				RequestID:    1,
-				PayloadMass:  600,
-				Delta:        8800,
-				SegmentOrder: 1,
-				Quantity:     1,
-				IsPrimary:    true,
-				Comment:      "Основная цель миссии.",
+				ID:               1,
+				FlightID:         1,
+				RequestID:        1,
+				PayloadMass:      600,
+				SpacecraftMassKg: 2600,
+				Delta:            8800,
+				SegmentOrder:     1,
+				Quantity:         1,
+				IsPrimary:        true,
+				Comment:          "Основная цель миссии.",
 			},
 			{
-				ID:           2,
-				PlanetID:     2,
-				RequestID:    1,
-				PayloadMass:  450,
-				Delta:        9800,
-				SegmentOrder: 2,
-				Quantity:     1,
-				IsPrimary:    false,
-				Comment:      "Дополнительный пролёт.",
+				ID:               2,
+				FlightID:         2,
+				RequestID:        1,
+				PayloadMass:      450,
+				SpacecraftMassKg: 2450,
+				Delta:            9800,
+				SegmentOrder:     2,
+				Quantity:         1,
+				IsPrimary:        false,
+				Comment:          "Дополнительный пролёт.",
 			},
 			{
-				ID:           3,
-				PlanetID:     3,
-				RequestID:    1,
-				PayloadMass:  350,
-				Delta:        10600,
-				SegmentOrder: 3,
-				Quantity:     1,
-				IsPrimary:    false,
-				Comment:      "Расширение маршрута.",
+				ID:               3,
+				FlightID:         3,
+				RequestID:        1,
+				PayloadMass:      350,
+				SpacecraftMassKg: 2350,
+				Delta:            10600,
+				SegmentOrder:     3,
+				Quantity:         1,
+				IsPrimary:        false,
+				Comment:          "Расширение маршрута.",
 			},
 			{
-				ID:           4,
-				PlanetID:     4,
-				RequestID:    1,
-				PayloadMass:  250,
-				Delta:        11300,
-				SegmentOrder: 4,
-				Quantity:     1,
-				IsPrimary:    false,
-				Comment:      "Финальная дальняя точка.",
+				ID:               4,
+				FlightID:         4,
+				RequestID:        1,
+				PayloadMass:      250,
+				SpacecraftMassKg: 2250,
+				Delta:            11300,
+				SegmentOrder:     4,
+				Quantity:         1,
+				IsPrimary:        false,
+				Comment:          "Финальная дальняя точка.",
 			},
 		},
 	}
 )
 
 // InterplanetaryFlightRequest — заявка на расчёт (сущность interplanetary_flights_requests в ER).
-// Поля м-м по массам аппарата и ДУ + агрегированный результат расчёта (total_*).
+// У заявки только собственные поля и итоговые результаты.
+// Вложенный массив m-m со строками расчёта вынесен в FlightsInRequest.
 type InterplanetaryFlightRequest struct {
 	ID int // id заявки
 
 	Title       string
 	Description string
 
-	SpacecraftDryMassKg float64 
-	EngineMassKg        float64 
-	IspSeconds          float64 
+	EngineMassKg float64
+	IspSeconds   float64
 
-	TotalFuelMassKg float64 
-	TotalDeltaVms     float64 
+	TotalFuelMassKg float64
+	TotalDeltaVms   float64
 
-	FlightsInRequest []InterplanetaryFlightInRequest 
+	FlightsInRequest []InterplanetaryFlightInRequest
 	RouteCount       int
 }
 
 // InterplanetaryFlightInRequest — связь м-м: заявка ↔ перелёт (таблица interplanetary_flights_in_request в ER).
-// Содержит поля связи (порядок, quantity, …) и расчётные поля по сегменту (результат на строку).
+// Содержит поля связи (порядок, quantity, …) и расчётные поля по сегменту.
+// Здесь же лежат повторяющиеся по строкам поля вроде массы аппарата и Δv.
 type InterplanetaryFlightInRequest struct {
-	Flight InterplanetaryFlight // FK → 
+	Flight InterplanetaryFlight
 
-	SegmentOrder  int    
-	Quantity      int     
-	IsPrimary     bool    
-	PayloadMassKg float64 
+	SegmentOrder     int
+	Quantity         int
+	IsPrimary        bool
+	PayloadMassKg    float64
+	SpacecraftMassKg float64
 
-	DeltaVms     float64 
-	PropellantKg float64 
-	EnergyJ      float64 
+	DeltaVms     float64
+	PropellantKg float64
+	EnergyJ      float64
 }
 
 // GetInterplanetaryFlights возвращает каталог межпланетных перелётов (interplanetary_flights).
 func (r *Repository) GetInterplanetaryFlights() ([]InterplanetaryFlight, error) {
 	routes := make([]InterplanetaryFlight, 0, len(planetOrder))
 	for _, id := range planetOrder {
-		pl, ok := planetsDictionary[id]
+		pl, ok := Planets[id]
 		if !ok || !pl.IsActive {
 			continue
 		}
@@ -295,41 +304,41 @@ func (r *Repository) GetInterplanetaryFlightRequests() ([]InterplanetaryFlightRe
 	requests := make([]InterplanetaryFlightRequest, 0, len(requestOrder))
 
 	for _, requestID := range requestOrder {
-		model, ok := interplanetaryFlightsDictionary[requestID]
+		model, ok := interplanetaryFlight[requestID]
 		if !ok {
 			continue
 		}
 
-		rowsData := planetsInFlightsDictionary[requestID]
+		rowsData := PlanetsInFlight[requestID]
 		rows := make([]InterplanetaryFlightInRequest, 0, len(rowsData))
 		for _, link := range rowsData {
-			fl, exists := flightMap[link.PlanetID]
+			fl, exists := flightMap[link.FlightID]
 			if !exists {
 				continue
 			}
 			rows = append(rows, InterplanetaryFlightInRequest{
-				Flight:        fl,
-				SegmentOrder:  link.SegmentOrder,
-				Quantity:      link.Quantity,
-				IsPrimary:     link.IsPrimary,
-				PayloadMassKg: link.PayloadMass,
-				DeltaVms:      link.Delta,
-				PropellantKg:  link.PayloadMass * 2.0,
-				EnergyJ:       link.Delta * 1000.0,
+				Flight:           fl,
+				SegmentOrder:     link.SegmentOrder,
+				Quantity:         link.Quantity,
+				IsPrimary:        link.IsPrimary,
+				PayloadMassKg:    link.PayloadMass,
+				SpacecraftMassKg: link.SpacecraftMassKg,
+				DeltaVms:         link.Delta,
+				PropellantKg:     link.PayloadMass * 2.0,
+				EnergyJ:          link.Delta * 1000.0,
 			})
 		}
 
 		requests = append(requests, InterplanetaryFlightRequest{
-			ID:                  model.ID,
-			Title:               "Заявка межпланетного рейса #" + fmt.Sprintf("%d", model.ID),
-			Description:         "Словарь interplanetary_flights + строки m-m planets_in_flights с результатами расчётов по сегментам.",
-			SpacecraftDryMassKg: model.SpacecraftDrymass,
-			EngineMassKg:        320,
-			IspSeconds:          320,
-			TotalFuelMassKg:     model.TotalFuelMass,
-			TotalDeltaVms:       model.TotalDelta,
-			FlightsInRequest:    rows,
-			RouteCount:          len(rows),
+			ID:               model.ID,
+			Title:            "Заявка межпланетного рейса #" + fmt.Sprintf("%d", model.ID),
+			Description:      "У заявки свои поля, внутри неё вложен массив m-m interplanetary_flights_in_request со строками расчёта и повторяющимися полями по сегментам.",
+			EngineMassKg:     model.EngineMassKg,
+			IspSeconds:       model.IspSeconds,
+			TotalFuelMassKg:  model.TotalFuelMass,
+			TotalDeltaVms:    model.TotalDelta,
+			FlightsInRequest: rows,
+			RouteCount:       len(rows),
 		})
 	}
 	return requests, nil

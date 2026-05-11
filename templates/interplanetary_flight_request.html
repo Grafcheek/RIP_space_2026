@@ -45,10 +45,6 @@
                         <span>{{ printf "%.0f" .interplanetaryFlightRequest.EngineMassKg }} кг</span>
                     </div>
                     <div class="interplanetary-flight-request-page__param">
-                        Масса КА (spacecraft_drymass_kg)
-                        <span>{{ printf "%.0f" .interplanetaryFlightRequest.SpacecraftDryMassKg }} кг</span>
-                    </div>
-                    <div class="interplanetary-flight-request-page__param">
                         Результат: total_delta_v (сумма Δv, м/с)
                         <span>{{ printf "%.0f" .interplanetaryFlightRequest.TotalDeltaVms }}</span>
                     </div>
@@ -60,6 +56,7 @@
             </div>
             <div class="interplanetary-flights-in-request-list">
                 <div class="interplanetary-flight-in-request-card interplanetary-flight-in-request-card--header" aria-hidden="true">
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">Масса КА (кг)</div>
                     <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">Топливо (кг)</div>
                     <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">Δv (м/с)</div>
                     <div class="interplanetary-flight-in-request-card__cell">Куда</div>
@@ -70,6 +67,7 @@
                 </div>
                 {{ range .interplanetaryFlightRequest.FlightsInRequest }}
                 <div class="interplanetary-flight-in-request-card">
+                    <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">{{ printf "%.0f" .SpacecraftMassKg }}</div>
                     <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">{{ printf "%.0f" .PropellantKg }}</div>
                     <div class="interplanetary-flight-in-request-card__cell interplanetary-flight-in-request-card__cell--result">{{ printf "%.0f" .DeltaVms }}</div>
                     <div class="interplanetary-flight-in-request-card__cell">{{ .Flight.To }}</div>

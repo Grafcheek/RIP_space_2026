@@ -14,6 +14,37 @@ import (
 	"web_backend/internal/app/repository"
 )
 
+type interplanetaryFlightResponse struct {
+	repository.TransferRoute
+	ShortDescriptionEn string `json:"short_description_en"`
+}
+
+func routeShortDescriptionEN(route repository.TransferRoute) string {
+	title := strings.ToLower(strings.TrimSpace(route.Title))
+
+	switch {
+	case strings.Contains(title, "юпитер"):
+		return "Transfer from Earth to Jupiter orbit with high delta-v and deep-space travel profile."
+	case strings.Contains(title, "сатурн"):
+		return "Mission to Saturn orbit with long transfer duration and increased propulsion requirements."
+	case strings.Contains(title, "уран"):
+		return "Long-range flight to Uranus orbit focused on fuel-heavy trajectory planning."
+	case strings.Contains(title, "нептун"):
+		return "Deep outer-system route to Neptune orbit with the highest transfer energy demand."
+	case strings.Contains(title, "обратн"):
+		return "Return transfer back to Earth orbit with mission planning and delta-v estimate."
+	default:
+		return "Interplanetary transfer route with mission planning data."
+	}
+}
+
+func adaptInterplanetaryFlightResponse(route repository.TransferRoute) interplanetaryFlightResponse {
+	return interplanetaryFlightResponse{
+		TransferRoute:      route,
+		ShortDescriptionEn: routeShortDescriptionEN(route),
+	}
+}
+
 // APIListInterplanetaryFlights возвращает список межпланетных перелётов с фильтрацией.
 // @Summary Список межпланетных перелётов (услуг)
 // @Tags interplanetaryflights
@@ -32,8 +63,13 @@ func (h *Handler) APIListInterplanetaryFlights(ctx *gin.Context) {
 		return
 	}
 
+	items := make([]interplanetaryFlightResponse, 0, len(routes))
+	for _, route := range routes {
+		items = append(items, adaptInterplanetaryFlightResponse(route))
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
-		"items": routes,
+		"items": items,
 	})
 }
 
@@ -61,7 +97,7 @@ func (h *Handler) APIGetInterplanetaryFlight(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, route)
+	ctx.JSON(http.StatusOK, adaptInterplanetaryFlightResponse(route))
 }
 
 // CreateInterplanetaryFlightForm поля multipart при создании услуги (swagger).
